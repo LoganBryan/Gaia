@@ -1,12 +1,16 @@
 #pragma once
+#define VK_USE_PLATFORM_WIN32_KHR
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
 #include <vector>
 #include <map>
+#include <set>
 #include <cstring>
 #include <optional>
 
@@ -24,10 +28,11 @@ const bool enableValidationLayers = true;
 struct QueueFamilyIndicies
 {
 	std::optional<uint32_t> graphicsFamily;
+	std::optional<uint32_t> presentFamily;
 
 	bool IsComplete()
 	{
-		return graphicsFamily.has_value();
+		return graphicsFamily.has_value() && presentFamily.has_value();
 	}
 };
 
@@ -53,6 +58,8 @@ private:
 
 	bool CheckValidationLayerSupport();
 	std::vector<const char*> GetRequiredExtensions();
+
+	void CreateSurface();
 
 	// Device Manager
 	void PickPhysicalDevice();
@@ -126,6 +133,9 @@ private:
 	VkInstance m_instance;
 	VkDebugUtilsMessengerEXT m_debugMessenger;
 
+	// Window surface
+	VkSurfaceKHR m_surface;
+
 	// Device Manager
 	VkPhysicalDeviceProperties deviceProperties;
 	VkPhysicalDeviceFeatures deviceFeatures;
@@ -133,7 +143,8 @@ private:
 	// This object will be implicitly destroyed alongside VkInstance
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	// Logical Device
-	VkDevice device;
+	VkDevice m_device;
 	VkQueue graphicsQueue;
+	VkQueue presentQueue;
 };
 
