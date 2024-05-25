@@ -9,6 +9,8 @@ obj/
 
 .vs/
 *.ipch
+*.tlog
+*.log
 
 # Prerequisites
 *.d
