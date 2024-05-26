@@ -50,7 +50,6 @@ struct SwapChainSupportDetails
 class HelloTriangle
 {
 public:
-
 	inline void Run()
 	{
 		InitWindow();
@@ -65,6 +64,7 @@ private:
 	void MainLoop();
 	void Cleanup();
 
+private:
 	void CreateInstance();
 
 	bool CheckValidationLayerSupport();
@@ -89,6 +89,8 @@ private:
 	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
 	void CreateSwapChain();
+
+	void CreateImageViews();
 
 	// Messenger
 	static inline VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
@@ -169,6 +171,7 @@ private:
 
 	VkSwapchainKHR swapChain;
 	std::vector<VkImage> swapChainImages;
+	std::vector<VkImageView> swapChainImageViews;
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
 };
