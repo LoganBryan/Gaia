@@ -19,6 +19,7 @@ void HelloTriangle::InitVulkan()
 	CreateLogicalDevice();
 	CreateSwapChain();
 	CreateImageViews();
+	CreateGraphicsPipeline();
 }
 
 void HelloTriangle::MainLoop()
@@ -46,6 +47,7 @@ void HelloTriangle::Cleanup()
 
 	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 	vkDestroyInstance(m_instance, nullptr);
+
 	glfwDestroyWindow(m_window);
 	glfwTerminate();
 }
@@ -534,4 +536,72 @@ void HelloTriangle::CreateImageViews()
 			throw std::runtime_error("Failed to create image views!");
 		}
 	}
+}
+
+void HelloTriangle::CreateGraphicsPipeline()
+{
+	// TODO: Compile these files from within code instead of using a batch file - shaderc could work
+	// TODO: After compiling within code make it easier to compile/ run shaders - we don't want to have to specify what shader we're using all the time that'll get annoying
+	auto vertShaderCode = ReadFile("compiledShaders/vert.spv");
+	auto fragShaderCode = ReadFile("compiledShaders/frag.spv");
+
+	VkShaderModule vertShaderModule = CreateShaderModule(vertShaderCode);
+	VkShaderModule fragShaderModule = CreateShaderModule(fragShaderCode);
+
+	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	vertShaderStageInfo.module = vertShaderModule;
+	vertShaderStageInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vertShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	vertShaderStageInfo.module = fragShaderModule;
+	vertShaderStageInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+
+	vkDestroyShaderModule(m_device, vertShaderModule, nullptr);
+	vkDestroyShaderModule(m_device, fragShaderModule, nullptr);
+}
+
+std::vector<char> HelloTriangle::ReadFile(const std::string& filepath)
+{
+	std::ifstream file(filepath, std::ios::ate | std::ios::binary);
+
+	if (!file.is_open())
+	{
+		throw std::runtime_error("Failed to open file!");
+	}
+
+	// Determine buffer size
+	size_t fileSize = (size_t)file.tellg();
+	std::vector<char> buffer(fileSize);
+
+	// Seek to start and read all at once
+	file.seekg(0);
+	file.read(buffer.data(), fileSize);
+
+	file.close();
+
+	printf("size of buffer [%s] %zu\n",filepath.c_str(), buffer.size());
+
+	return buffer;
+}
+
+VkShaderModule HelloTriangle::CreateShaderModule(const std::vector<char>& code)
+{
+	VkShaderModuleCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = code.size();
+	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+	VkShaderModule shaderModule;
+	if (vkCreateShaderModule(m_device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create shader module!");
+	}
+
+	return shaderModule;
 }

@@ -15,6 +15,7 @@
 #include <map>
 #include <set>
 #include <cstring>
+#include <fstream>
 #include <optional>
 
 const uint32_t WIDTH = 800;
@@ -91,6 +92,11 @@ private:
 	void CreateSwapChain();
 
 	void CreateImageViews();
+
+	// Pipeline
+	void CreateGraphicsPipeline();
+	static std::vector<char> ReadFile(const std::string& filepath);
+	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
 	// Messenger
 	static inline VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
