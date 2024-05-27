@@ -24,6 +24,8 @@ const uint32_t HEIGHT = 600;
 const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 const std::vector<const char*> deviceExtensions = { "VK_KHR_swapchain" };
 
+const std::vector<VkDynamicState> dynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
@@ -180,5 +182,7 @@ private:
 	std::vector<VkImageView> swapChainImageViews;
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
+
+	VkPipelineLayout pipelineLayout;
 };
 
