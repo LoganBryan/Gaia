@@ -24,6 +24,7 @@ void HelloTriangle::InitVulkan()
 	CreateFrameBuffers();
 	CreateCommandPool();
 	CreateCommandBuffer();
+	CreateSyncObjects();
 }
 
 void HelloTriangle::MainLoop()
@@ -31,7 +32,10 @@ void HelloTriangle::MainLoop()
 	while (!glfwWindowShouldClose(m_window))
 	{
 		glfwPollEvents();
+		DrawFrame();
 	}
+
+	vkDeviceWaitIdle(m_device);
 }
 
 void HelloTriangle::Cleanup()
@@ -55,6 +59,10 @@ void HelloTriangle::Cleanup()
 		vkDestroyImageView(m_device, imageView, nullptr);
 	}
 
+	vkDestroySemaphore(m_device, imageAvailable, nullptr);
+	vkDestroySemaphore(m_device, renderFinished, nullptr);
+	vkDestroyFence(m_device, inFlight, nullptr);
+
 	vkDestroyCommandPool(m_device, commandPool, nullptr);
 	vkDestroySwapchainKHR(m_device, swapChain, nullptr);
 	vkDestroyDevice(m_device, nullptr);
@@ -64,6 +72,58 @@ void HelloTriangle::Cleanup()
 
 	glfwDestroyWindow(m_window);
 	glfwTerminate();
+}
+
+void HelloTriangle::DrawFrame()
+{
+	// Wait until previous frame finished
+	vkWaitForFences(m_device, 1, &inFlight, VK_TRUE, UINT64_MAX);
+	vkResetFences(m_device, 1, &inFlight);
+
+	// Get image from swap chain
+	uint32_t imageIndex;
+	vkAcquireNextImageKHR(m_device, swapChain, UINT64_MAX, imageAvailable, VK_NULL_HANDLE, &imageIndex);
+
+	// Record command buffer
+	vkResetCommandBuffer(commandBuffer, 0);
+	RecordCommandBuffer(commandBuffer, imageIndex);
+
+	// Submit command buffer
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	// Ensure queue syncronization
+	VkSemaphore waitSemaphores[] = { imageAvailable };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	VkSemaphore signalSemaphores[] = { renderFinished };
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores;
+
+	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlight) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to submit draw command buffer!");
+	}
+
+	// Begin presentation
+	VkPresentInfoKHR presentInfo{};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = signalSemaphores;
+
+	VkSwapchainKHR swapChains[] = { swapChain };
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapChains;
+	presentInfo.pImageIndices = &imageIndex;
+	presentInfo.pResults = nullptr; // Optional - mainly for multiple swap chains
+
+	vkQueuePresentKHR(presentQueue, &presentInfo);
 }
 
 void HelloTriangle::CreateInstance()
@@ -772,6 +832,15 @@ void HelloTriangle::CreateRenderPass()
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
 
+	// Ensure we start the transition starts at the right time
+	VkSubpassDependency dependency{};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
 	// Render pass
 	VkRenderPassCreateInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -779,6 +848,8 @@ void HelloTriangle::CreateRenderPass()
 	renderPassInfo.pAttachments = &colorAttachment;
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = &dependency;
 
 	if (vkCreateRenderPass(m_device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
 	{
@@ -807,6 +878,23 @@ void HelloTriangle::CreateFrameBuffers()
 		{
 			throw std::runtime_error("Failed to create framebuffer!");
 		}
+	}
+}
+
+void HelloTriangle::CreateSyncObjects()
+{
+	VkSemaphoreCreateInfo semaphoreInfo{};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	
+	VkFenceCreateInfo fenceInfo{};
+	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &imageAvailable) != VK_SUCCESS ||
+		vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &renderFinished) != VK_SUCCESS ||
+		vkCreateFence(m_device, &fenceInfo, nullptr, &inFlight) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create semaphores/ fence!");
 	}
 }
 
@@ -859,7 +947,7 @@ void HelloTriangle::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 	renderPassInfo.renderArea.offset = { 0,0 };
 	renderPassInfo.renderArea.extent = swapChainExtent;
 
-	VkClearValue clearColor = { {{0.2f, 0.0f, 0.8f, 1.0f}} };
+	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 

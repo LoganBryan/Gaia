@@ -68,6 +68,8 @@ private:
 	void Cleanup();
 
 private:
+	void DrawFrame();
+
 	void CreateInstance();
 
 	bool CheckValidationLayerSupport();
@@ -103,6 +105,8 @@ private:
 	void CreateRenderPass();
 
 	void CreateFrameBuffers();
+
+	void CreateSyncObjects();
 
 	void CreateCommandPool();
 	void CreateCommandBuffer();
@@ -198,5 +202,10 @@ private:
 
 	VkCommandPool commandPool;
 	VkCommandBuffer commandBuffer;
+
+	// Sync objects
+	VkSemaphore imageAvailable;
+	VkSemaphore renderFinished;
+	VkFence inFlight;
 };
 
