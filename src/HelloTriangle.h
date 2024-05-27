@@ -18,8 +18,11 @@
 #include <fstream>
 #include <optional>
 
+#include <chrono>
+
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
+const int MAX_FRAMES_IN_FLIGHT = 2;
 
 const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 const std::vector<const char*> deviceExtensions = { "VK_KHR_swapchain" };
@@ -109,7 +112,7 @@ private:
 	void CreateSyncObjects();
 
 	void CreateCommandPool();
-	void CreateCommandBuffer();
+	void CreateCommandBuffers();
 	void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
 	// Messenger
@@ -201,11 +204,12 @@ private:
 	std::vector<VkFramebuffer> swapChainFrameBuffers;
 
 	VkCommandPool commandPool;
-	VkCommandBuffer commandBuffer;
 
 	// Sync objects
-	VkSemaphore imageAvailable;
-	VkSemaphore renderFinished;
-	VkFence inFlight;
+	std::vector<VkCommandBuffer> commandBuffers;
+	std::vector<VkSemaphore> imageAvailableSemaphores;
+	std::vector<VkSemaphore> renderFinishedSemaphores;
+	std::vector<VkFence> inFlightFences;
+	uint32_t currentFrame = 0;
 };
 
