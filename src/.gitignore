@@ -1,16 +1,17 @@
 # Ignore build dirs
-x64/Debug/
-x64/Release/
+.vs/
+x64/
 
 # General build dirs
 build/
 bin/
 obj/
 
-.vs/
-*.ipch
-*.tlog
-*.log
+**.ipch
+**.tlog
+**.log
+**.ilk
+**.pdb
 
 # Prerequisites
 *.d
