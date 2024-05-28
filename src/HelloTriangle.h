@@ -20,20 +20,22 @@
 
 #include <chrono>
 
+#include "VulkanInstance.h"
+
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
+//const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 const std::vector<const char*> deviceExtensions = { "VK_KHR_swapchain" };
 
 const std::vector<VkDynamicState> dynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
-#ifdef NDEBUG
-const bool enableValidationLayers = false;
-#else
-const bool enableValidationLayers = true;
-#endif // NDEBUG
+//#ifdef NDEBUG
+//const bool enableValidationLayers = false;
+//#else
+//const bool enableValidationLayers = true;
+//#endif // NDEBUG
 
 struct QueueFamilyIndicies
 {
@@ -73,10 +75,10 @@ private:
 private:
 	void DrawFrame();
 
-	void CreateInstance();
+	//void CreateInstance();
 
-	bool CheckValidationLayerSupport();
-	std::vector<const char*> GetRequiredExtensions();
+	//bool CheckValidationLayerSupport();
+	//std::vector<const char*> GetRequiredExtensions();
 
 	void CreateSurface();
 
@@ -118,67 +120,68 @@ private:
 	void CreateCommandBuffers();
 	void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
-	// Messenger
-	static inline VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
-	{
-		std::cerr << "Validation Layer: " << pCallbackData->pMessage << std::endl;
+	//// Messenger
+	//static inline VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+	//{
+	//	std::cerr << "Validation Layer: " << pCallbackData->pMessage << std::endl;
 
-		return VK_FALSE;
-	}
+	//	return VK_FALSE;
+	//}
 
-	// Debug messenger to be passed into this object
-	inline VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
-	{
-		auto funct = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+	//// Debug messenger to be passed into this object
+	//inline VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
+	//{
+	//	auto funct = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
 
-		if (funct != nullptr)
-		{
-			return funct(instance, pCreateInfo, pAllocator, pDebugMessenger);
-		}
-		else
-		{
-			return VK_ERROR_EXTENSION_NOT_PRESENT;
-		}
-	}
+	//	if (funct != nullptr)
+	//	{
+	//		return funct(instance, pCreateInfo, pAllocator, pDebugMessenger);
+	//	}
+	//	else
+	//	{
+	//		return VK_ERROR_EXTENSION_NOT_PRESENT;
+	//	}
+	//}
 
-	inline void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
-	{
-		auto funct = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+	//inline void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
+	//{
+	//	auto funct = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
 
-		if (funct != nullptr)
-		{
-			funct(instance, debugMessenger, pAllocator);
-		}
-	}
+	//	if (funct != nullptr)
+	//	{
+	//		funct(instance, debugMessenger, pAllocator);
+	//	}
+	//}
 
-	inline void SetupDebugMessenger()
-	{
-		if (!enableValidationLayers) return;
+	//inline void SetupDebugMessenger()
+	//{
+	//	if (!enableValidationLayers) return;
 
-		VkDebugUtilsMessengerCreateInfoEXT createInfo;
-		PopulateDebugMessengerCreateInfo(createInfo);
+	//	VkDebugUtilsMessengerCreateInfoEXT createInfo;
+	//	PopulateDebugMessengerCreateInfo(createInfo);
 
-		// Create extension object if available
-		if (CreateDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &m_debugMessenger) != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to setup debug messenger!");
-		}
-	}
+	//	// Create extension object if available
+	//	if (CreateDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &m_debugMessenger) != VK_SUCCESS)
+	//	{
+	//		throw std::runtime_error("Failed to setup debug messenger!");
+	//	}
+	//}
 
-	inline void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
-	{
-		// Struct of details about the messenger + callback
-		createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-		createInfo.pfnUserCallback = DebugCallback;
-		//createInfo.pUserData = nullptr; // optional ptr for callback
-	}
+	//inline void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+	//{
+	//	// Struct of details about the messenger + callback
+	//	createInfo = {};
+	//	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	//	createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+	//	createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+	//	createInfo.pfnUserCallback = DebugCallback;
+	//	//createInfo.pUserData = nullptr; // optional ptr for callback
+	//}
 
 private:
+
 	GLFWwindow* m_window;
-	VkInstance m_instance;
+	//VkInstance m_instance;
 	VkDebugUtilsMessengerEXT m_debugMessenger;
 
 	// Window surface
@@ -215,5 +218,7 @@ private:
 	std::vector<VkFence> inFlightFences;
 	uint32_t currentFrame = 0;
 	bool frameBufferResized = false;
+
+	VulkanInstance m_VulkanInstance;
 };
 

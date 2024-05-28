@@ -19,11 +19,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DeviceManager.cpp" />
     <ClCompile Include="HelloTriangle.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PipelineManager.cpp" />
+    <ClCompile Include="SwapChainManager.cpp" />
+    <ClCompile Include="VulkanInstance.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DeviceManager.h" />
     <ClInclude Include="HelloTriangle.h" />
+    <ClInclude Include="PipelineManager.h" />
+    <ClInclude Include="SwapChainManager.h" />
+    <ClInclude Include="VulkanInstance.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader.frag" />

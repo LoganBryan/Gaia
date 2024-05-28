@@ -10,7 +10,6 @@
 int main()
 {
 	HelloTriangle app;
-
 	try
 	{
 		app.Run();
