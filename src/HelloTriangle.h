@@ -97,6 +97,8 @@ private:
 	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
 	void CreateSwapChain();
+	void CleanupSwapChain();
+	void RecreateSwapChain();
 
 	void CreateImageViews();
 
@@ -108,6 +110,7 @@ private:
 	void CreateRenderPass();
 
 	void CreateFrameBuffers();
+	static void FrameBufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	void CreateSyncObjects();
 
@@ -211,5 +214,6 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 	uint32_t currentFrame = 0;
+	bool frameBufferResized = false;
 };
 

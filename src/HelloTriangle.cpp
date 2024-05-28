@@ -5,9 +5,10 @@ void HelloTriangle::InitWindow()
 	glfwInit();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	m_window = glfwCreateWindow(WIDTH, HEIGHT, "Gaia - Vulkan", nullptr, nullptr);
+	glfwSetWindowUserPointer(m_window, this);
+	glfwSetFramebufferSizeCallback(m_window, FrameBufferResizeCallback);
 }
 
 void HelloTriangle::InitVulkan()
@@ -40,6 +41,8 @@ void HelloTriangle::MainLoop()
 
 void HelloTriangle::Cleanup()
 {
+	CleanupSwapChain();
+
 	vkDestroyPipeline(m_device, graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(m_device, pipelineLayout, nullptr);
 	vkDestroyRenderPass(m_device, renderPass, nullptr);
@@ -47,16 +50,6 @@ void HelloTriangle::Cleanup()
 	if (enableValidationLayers)
 	{
 		DestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
-	}
-
-	for (auto frameBuffer : swapChainFrameBuffers)
-	{
-		vkDestroyFramebuffer(m_device, frameBuffer, nullptr);
-	}
-
-	for (auto imageView : swapChainImageViews)
-	{
-		vkDestroyImageView(m_device, imageView, nullptr);
 	}
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -67,7 +60,6 @@ void HelloTriangle::Cleanup()
 	}
 
 	vkDestroyCommandPool(m_device, commandPool, nullptr);
-	vkDestroySwapchainKHR(m_device, swapChain, nullptr);
 	vkDestroyDevice(m_device, nullptr);
 
 	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
@@ -92,11 +84,25 @@ void HelloTriangle::DrawFrame()
 
 	// Wait until previous frame finished
 	vkWaitForFences(m_device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-	vkResetFences(m_device, 1, &inFlightFences[currentFrame]);
 
 	// Get image from swap chain
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(m_device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+	VkResult result = vkAcquireNextImageKHR(m_device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+	// If the swap chain is out of date (usually because of a resize), we'll remake it
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		RecreateSwapChain();
+		return;
+	}
+	// Failed to get image or it can no longer be presented
+	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+	{
+		throw std::runtime_error("Failed to acquire swap chain image!");
+	}
+
+	// Only reset the fence if we know work is being submitted
+	vkResetFences(m_device, 1, &inFlightFences[currentFrame]);
 
 	// Record command buffer
 	vkResetCommandBuffer(commandBuffers[currentFrame], 0);
@@ -137,7 +143,17 @@ void HelloTriangle::DrawFrame()
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr; // Optional - mainly for multiple swap chains
 
-	vkQueuePresentKHR(presentQueue, &presentInfo);
+	result = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || frameBufferResized)
+	{
+		frameBufferResized = false;
+		RecreateSwapChain();
+	}
+	else if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to present swap chain image!");
+	}
 
 	// Advance next frame
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -597,6 +613,40 @@ void HelloTriangle::CreateSwapChain()
 	swapChainExtent = extent;
 }
 
+void HelloTriangle::CleanupSwapChain()
+{
+	for (size_t i = 0; i < swapChainFrameBuffers.size(); i++)
+	{
+		vkDestroyFramebuffer(m_device, swapChainFrameBuffers[i], nullptr);
+	}
+
+	for (size_t i = 0; i < swapChainImageViews.size(); i++)
+	{
+		vkDestroyImageView(m_device, swapChainImageViews[i], nullptr);
+	}
+	vkDestroySwapchainKHR(m_device, swapChain, nullptr);
+}
+
+void HelloTriangle::RecreateSwapChain()
+{
+	// Pause application whilst minimized
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(m_window, &width, &height);
+	while (width == 0 || height == 0)
+	{
+		glfwGetFramebufferSize(m_window, &width, &height);
+		glfwWaitEvents();
+	}
+
+	vkDeviceWaitIdle(m_device);
+
+	CleanupSwapChain();
+
+	CreateSwapChain();
+	CreateImageViews();
+	CreateFrameBuffers();
+}
+
 void HelloTriangle::CreateImageViews()
 {
 	swapChainImageViews.resize(swapChainImages.size());
@@ -896,6 +946,12 @@ void HelloTriangle::CreateFrameBuffers()
 			throw std::runtime_error("Failed to create framebuffer!");
 		}
 	}
+}
+
+void HelloTriangle::FrameBufferResizeCallback(GLFWwindow* window, int width, int height)
+{
+	auto app = reinterpret_cast<HelloTriangle*>(glfwGetWindowUserPointer(window));
+	app->frameBufferResized = true;
 }
 
 void HelloTriangle::CreateSyncObjects()
