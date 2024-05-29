@@ -1,4 +1,6 @@
 #pragma once
+#include "Context.h"
+
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <map>
@@ -6,24 +8,12 @@
 #include <string>
 #include <optional>
 
-const std::vector<const char*> deviceExtensions = { "VK_KHR_swapchain" };
-
-struct QueueFamilyIndicies
-{
-	std::optional<uint32_t> graphicsFamily;
-	std::optional<uint32_t> presentFamily;
-
-	bool IsComplete()
-	{
-		return graphicsFamily.has_value() && presentFamily.has_value();
-	}
-};
+//#include "Context.h"
 
 class DeviceManager
 {
 public:
 	void Init(VkInstance instance, VkSurfaceKHR surface);
-	QueueFamilyIndicies FindQueueFamilies(VkPhysicalDevice device);
 
 	// Get all devices, sorted in order of suitability - i.e. most features
 	std::multimap<int, VkPhysicalDevice> GetPhysicalDevices();
@@ -38,9 +28,13 @@ public:
 	VkPhysicalDeviceProperties GetDeviceProperties() const { return m_deviceProperties; }
 	VkPhysicalDeviceFeatures GetDeviceFeatures() const { return m_deviceFeatures; }
 
+	inline VkDevice GetDevice() { return m_device; }
+	inline VkQueue GetGraphicsQueue() { return m_graphicsQueue; }
+	inline VkQueue GetPresentQueue() { return m_presentQueue; }
+
 private:
-	VkInstance m_instance;
-	VkSurfaceKHR m_surface;
+	//VkInstance m_instance;
+	//VkSurfaceKHR m_surface;
 
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 	std::multimap<int, VkPhysicalDevice> m_devices;
@@ -52,7 +46,5 @@ private:
 	VkPhysicalDeviceProperties m_deviceProperties;
 	VkPhysicalDeviceFeatures m_deviceFeatures;
 
-	bool IsDeviceSuitable(VkPhysicalDevice device);
-	std::vector<const char*> GetRequiredExtensions();
 };
 

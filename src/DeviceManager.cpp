@@ -3,47 +3,8 @@
 
 void DeviceManager::Init(VkInstance instance, VkSurfaceKHR surface)
 {
-	m_instance = instance;
-	m_surface = surface;
-}
-
-QueueFamilyIndicies DeviceManager::FindQueueFamilies(VkPhysicalDevice device)
-{
-	QueueFamilyIndicies indices;
-
-	// Retrieve list of queue families
-	uint32_t queueFamilyCount = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-
-	// Find at least one queue family that supports 'VK_QUEUE_GRAPHICS_BIT'
-	int i = 0;
-	for (const auto& queueFamily : queueFamilies)
-	{
-		if (indices.IsComplete())
-		{
-			break;
-		}
-
-		VkBool32 presentSupport = false;
-		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_surface, &presentSupport);
-
-		if (presentSupport)
-		{
-			indices.presentFamily = i;
-		}
-
-		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-		{
-			indices.graphicsFamily = i;
-		}
-
-		i++;
-	}
-
-	return indices;
+	//m_instance = instance;
+	//m_surface = surface;
 }
 
 std::multimap<int, VkPhysicalDevice> DeviceManager::GetPhysicalDevices()
@@ -55,7 +16,7 @@ std::multimap<int, VkPhysicalDevice> DeviceManager::GetPhysicalDevices()
 
 	// Start listing graphics cards
 	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
+	vkEnumeratePhysicalDevices(CONTEXTMGR->GetVkInstance(), &deviceCount, nullptr);
 
 	if (deviceCount == 0)
 	{
@@ -63,7 +24,7 @@ std::multimap<int, VkPhysicalDevice> DeviceManager::GetPhysicalDevices()
 	}
 
 	std::vector<VkPhysicalDevice> devices(deviceCount);
-	vkEnumeratePhysicalDevices(m_instance, &deviceCount, devices.data());
+	vkEnumeratePhysicalDevices(CONTEXTMGR->GetVkInstance(), &deviceCount, devices.data());
 
 	// Sort by score (features)
 	for (const auto& device : devices)
@@ -77,6 +38,11 @@ std::multimap<int, VkPhysicalDevice> DeviceManager::GetPhysicalDevices()
 
 VkPhysicalDevice DeviceManager::GetBestPhysicalDevice()
 {
+	if (m_devices.empty())
+	{
+		GetPhysicalDevices();
+	}
+
 	if (m_devices.rbegin()->first > 0)
 	{
 		m_physicalDevice = m_devices.rbegin()->second;
@@ -92,7 +58,7 @@ int DeviceManager::RateDeviceSuitability(VkPhysicalDevice device)
 {
 	vkGetPhysicalDeviceProperties(device, &m_deviceProperties);
 	vkGetPhysicalDeviceFeatures(device, &m_deviceFeatures);
-	QueueFamilyIndicies indices = FindQueueFamilies(device);
+	QueueFamilyIndicies indices = CONTEXTMGR->FindQueueFamilies(device);
 	bool extensionsSupported = CheckDeviceExtensionSupport(device);
 	bool swapChainAdequate = false;
 	int score = 0;
@@ -102,7 +68,7 @@ int DeviceManager::RateDeviceSuitability(VkPhysicalDevice device)
 		return 0;
 	}
 
-	SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
+	SwapChainSupportDetails swapChainSupport = CONTEXTMGR->QuerySwapChainSupport(device);
 	swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 
 	if (!swapChainAdequate)
@@ -151,14 +117,54 @@ bool DeviceManager::CheckDeviceExtensionSupport(VkPhysicalDevice device)
 
 void DeviceManager::CreateLogicalDevice()
 {
-}
-
-bool DeviceManager::IsDeviceSuitable(VkPhysicalDevice device)
-{
-	return false;
-}
-
-std::vector<const char*> DeviceManager::GetRequiredExtensions()
-{
-	return std::vector<const char*>();
+	QueueFamilyIndicies indicies = CONTEXTMGR->FindQueueFamilies(m_physicalDevice);
+	
+	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+	std::set<uint32_t> uniqueQueueFamiles = { indicies.graphicsFamily.value(), indicies.presentFamily.value() };
+	
+	// Priority to influence command buffer's execution scheduler
+	float queuePriority = 1.0f;
+	
+	for (uint32_t queueFamily : uniqueQueueFamiles)
+	{
+		VkDeviceQueueCreateInfo queueCreateInfo{};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = queueFamily;
+		queueCreateInfo.queueCount = 1;
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+	
+		queueCreateInfos.push_back(queueCreateInfo);
+	}
+	
+	// Specify device features that will be used
+	VkPhysicalDeviceFeatures deviceFeatures{};
+	
+	// Create the logical device
+	VkDeviceCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+	createInfo.pQueueCreateInfos = queueCreateInfos.data();
+	createInfo.pEnabledFeatures = &deviceFeatures;
+	
+	// Setup device specific extensions and validation layers - primarily for compatability for older versions
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+	
+	if (enableValidationLayers)
+	{
+		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+		createInfo.ppEnabledLayerNames = validationLayers.data();
+	}
+	else
+	{
+		createInfo.enabledLayerCount = 0;
+	}
+	
+	if (vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create logical device!");
+	}
+	
+	vkGetDeviceQueue(m_device, indicies.graphicsFamily.value(), 0, &m_graphicsQueue);
+	vkGetDeviceQueue(m_device, indicies.graphicsFamily.value(), 0, &m_presentQueue);
 }
