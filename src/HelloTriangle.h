@@ -6,6 +6,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <iostream>
 #include <stdexcept>
@@ -30,7 +31,6 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-// Temp vertex data
 struct Vertex
 {
 	glm::vec2 pos;
@@ -66,6 +66,13 @@ struct Vertex
 	}
 };
 
+struct UniformBufferObject
+{
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 projection;
+};
+
 const std::vector<Vertex> vertices =
 {
 	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
@@ -74,8 +81,7 @@ const std::vector<Vertex> vertices =
 	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
 };
 
-// Could change to 32bit if we require more 
-const std::vector<uint16_t> indicies =
+const std::vector<uint32_t> indicies =
 {
 	0, 1, 2, 2, 3, 0
 };
@@ -98,6 +104,9 @@ private:
 
 private:
 	void DrawFrame();
+	void UpdateUniformBuffer(uint32_t currentImage);
+
+	void CreateDescriptorSetLayout();
 
 	// Pipeline
 	void CreateGraphicsPipeline();
@@ -117,8 +126,13 @@ private:
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void CreateVertexBuffer();
 	void CreateIndexBuffer();
+	void CreateUniformBuffers();
+
+	void CreateDescriptorPool();
+	void CreateDescriptorSets();
 
 private:
+	VkDescriptorSetLayout m_descriptorSetLayout;
 	VkPipelineLayout m_pipelineLayout;
 	VkPipeline m_graphicsPipeline;
 	VkBuffer m_vertexBuffer;
@@ -126,7 +140,14 @@ private:
 	VkBuffer m_indexBuffer;
 	VkDeviceMemory m_indexBufferMemory;
 
+	// Uniform buffer
+	std::vector<VkBuffer> uniformBuffers;
+	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	std::vector<void*> uniformBuffersMapped;
+
 	VkCommandPool commandPool;
+	VkDescriptorPool m_descriptorPool;
+	std::vector<VkDescriptorSet> m_descriptorSets;
 
 	// Sync objects
 	std::vector<VkCommandBuffer> commandBuffers;
