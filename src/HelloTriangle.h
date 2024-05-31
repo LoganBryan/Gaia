@@ -5,7 +5,9 @@
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <iostream>
 #include <stdexcept>
@@ -66,6 +68,13 @@ struct Vertex
 	}
 };
 
+struct UniformBufferObject
+{
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
+
 const std::vector<Vertex> vertices =
 {
 	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
@@ -118,22 +127,38 @@ private:
 	void CreateVertexBuffer();
 	void CreateIndexBuffer();
 
+	void CreateDescriptorSetLayout();
+	void CreateUniformBuffers();
+	void UpdateUniformBuffer(uint32_t currentImage);
+	void CreateDescriptorPool();
+	void CreateDescriptorSets();
 private:
+
+	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout m_pipelineLayout;
 	VkPipeline m_graphicsPipeline;
+
 	VkBuffer m_vertexBuffer;
 	VkDeviceMemory m_vertexBufferMemory;	
+
 	VkBuffer m_indexBuffer;
 	VkDeviceMemory m_indexBufferMemory;
 
-	VkCommandPool commandPool;
+	std::vector<VkBuffer> m_uniformBuffers;
+	std::vector<VkDeviceMemory> m_uniformBuffersMemory;
+	std::vector<void*> m_uniformBuffersMapped;
+
+	VkDescriptorPool m_descriptorPool;
+	std::vector<VkDescriptorSet> m_descriptorSets;
+
+	VkCommandPool m_commandPool;
 
 	// Sync objects
-	std::vector<VkCommandBuffer> commandBuffers;
-	std::vector<VkSemaphore> imageAvailableSemaphores;
-	std::vector<VkSemaphore> renderFinishedSemaphores;
-	std::vector<VkFence> inFlightFences;
-	uint32_t currentFrame = 0;
+	std::vector<VkCommandBuffer> m_commandBuffers;
+	std::vector<VkSemaphore> m_imageAvailableSemaphores;
+	std::vector<VkSemaphore> m_renderFinishedSemaphores;
+	std::vector<VkFence> m_inFlightFences;
+	uint32_t m_currentFrame = 0;
 
 	SwapChainManager* m_SwapChainManager;
 	DeviceManager* m_DeviceManager;

@@ -103,6 +103,8 @@ void GAIA::Context::CleanupInstance()
 	}
 
 	vkDestroyInstance(m_VkInstance, nullptr);
+
+	glfwDestroyWindow(m_window);
 }
 
 QueueFamilyIndicies &GAIA::Context::FindQueueFamilies(VkPhysicalDevice device)

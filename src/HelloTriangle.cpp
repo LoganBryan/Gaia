@@ -17,6 +17,8 @@ void HelloTriangle::InitVulkan()
 	m_SwapChainManager->CreateImageViews();
 
 	CreateRenderPass();
+
+	CreateDescriptorSetLayout();
 	CreateGraphicsPipeline();
 
 	m_SwapChainManager->CreateFrameBuffers();
@@ -24,6 +26,10 @@ void HelloTriangle::InitVulkan()
 
 	CreateVertexBuffer();
 	CreateIndexBuffer();
+	CreateUniformBuffers();
+
+	CreateDescriptorPool();
+	CreateDescriptorSets();
 
 	CreateCommandBuffers();
 	CreateSyncObjects();
@@ -44,6 +50,15 @@ void HelloTriangle::Cleanup()
 {
 	m_SwapChainManager->CleanupSwapChain();
 
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		vkDestroyBuffer(m_DeviceManager->GetDevice(), m_uniformBuffers[i], nullptr);
+		vkFreeMemory(m_DeviceManager->GetDevice(), m_uniformBuffersMemory[i], nullptr);
+	}
+
+	vkDestroyDescriptorPool(m_DeviceManager->GetDevice(), m_descriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(m_DeviceManager->GetDevice(), descriptorSetLayout, nullptr);
+
 	vkDestroyBuffer(m_DeviceManager->GetDevice(), m_vertexBuffer, nullptr);
 	vkFreeMemory(m_DeviceManager->GetDevice(), m_vertexBufferMemory, nullptr);
 
@@ -56,12 +71,12 @@ void HelloTriangle::Cleanup()
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
-		vkDestroySemaphore(m_DeviceManager->GetDevice(), imageAvailableSemaphores[i], nullptr);
-		vkDestroySemaphore(m_DeviceManager->GetDevice(), renderFinishedSemaphores[i], nullptr);
-		vkDestroyFence(m_DeviceManager->GetDevice(), inFlightFences[i], nullptr);
+		vkDestroySemaphore(m_DeviceManager->GetDevice(), m_imageAvailableSemaphores[i], nullptr);
+		vkDestroySemaphore(m_DeviceManager->GetDevice(), m_renderFinishedSemaphores[i], nullptr);
+		vkDestroyFence(m_DeviceManager->GetDevice(), m_inFlightFences[i], nullptr);
 	}
 
-	vkDestroyCommandPool(m_DeviceManager->GetDevice(), commandPool, nullptr);
+	vkDestroyCommandPool(m_DeviceManager->GetDevice(), m_commandPool, nullptr);
 	vkDestroyDevice(m_DeviceManager->GetDevice(), nullptr);
 
 	vkDestroySurfaceKHR(CONTEXTMGR->GetVkInstance(), CONTEXTMGR->GetSurface(), nullptr);
@@ -69,6 +84,8 @@ void HelloTriangle::Cleanup()
 	CONTEXTMGR->CleanupInstance();
 	delete m_SwapChainManager;
 	delete m_DeviceManager;
+
+	glfwTerminate();
 }
 
 void HelloTriangle::DrawFrame()
@@ -85,11 +102,11 @@ void HelloTriangle::DrawFrame()
 	lastTime = currentTime;
 
 	// Wait until previous frame finished
-	vkWaitForFences(m_DeviceManager->GetDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+	vkWaitForFences(m_DeviceManager->GetDevice(), 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 
 	// Get image from swap chain
 	uint32_t imageIndex;
-	VkResult result = vkAcquireNextImageKHR(m_DeviceManager->GetDevice(), m_SwapChainManager->GetSwapChain(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+	VkResult result = vkAcquireNextImageKHR(m_DeviceManager->GetDevice(), m_SwapChainManager->GetSwapChain(), UINT64_MAX, m_imageAvailableSemaphores[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
 
 	// If the swap chain is out of date (usually because of a resize), we'll remake it
 	if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -104,31 +121,33 @@ void HelloTriangle::DrawFrame()
 	}
 
 	// Only reset the fence if we know work is being submitted
-	vkResetFences(m_DeviceManager->GetDevice(), 1, &inFlightFences[currentFrame]);
+	vkResetFences(m_DeviceManager->GetDevice(), 1, &m_inFlightFences[m_currentFrame]);
 
 	// Record command buffer
-	vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-	RecordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+	vkResetCommandBuffer(m_commandBuffers[m_currentFrame], 0);
+	RecordCommandBuffer(m_commandBuffers[m_currentFrame], imageIndex);
+
+	UpdateUniformBuffer(m_currentFrame);
 
 	// Submit command buffer
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
 	// Ensure queue syncronization
-	VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame]};
+	VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphores[m_currentFrame]};
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
+	submitInfo.pCommandBuffers = &m_commandBuffers[m_currentFrame];
 
-	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame]};
+	VkSemaphore signalSemaphores[] = { m_renderFinishedSemaphores[m_currentFrame]};
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(m_DeviceManager->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS)
+	if (vkQueueSubmit(m_DeviceManager->GetGraphicsQueue(), 1, &submitInfo, m_inFlightFences[m_currentFrame]) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to submit draw command buffer!");
 	}
@@ -158,7 +177,7 @@ void HelloTriangle::DrawFrame()
 	}
 
 	// Advance next frame
-	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+	m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void HelloTriangle::CreateGraphicsPipeline()
@@ -241,7 +260,7 @@ void HelloTriangle::CreateGraphicsPipeline()
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
 	rasterizer.depthBiasClamp = 0.0f; // Optional
@@ -283,8 +302,8 @@ void HelloTriangle::CreateGraphicsPipeline()
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0; // Optional
-	pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+	pipelineLayoutInfo.setLayoutCount = 1;
+	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
@@ -411,9 +430,9 @@ void HelloTriangle::CreateRenderPass()
 
 void HelloTriangle::CreateSyncObjects()
 {
-	imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-	renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-	inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+	m_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	m_renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	m_inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
 	VkSemaphoreCreateInfo semaphoreInfo{};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -424,9 +443,9 @@ void HelloTriangle::CreateSyncObjects()
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
-		if (vkCreateSemaphore(m_DeviceManager->GetDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-			vkCreateSemaphore(m_DeviceManager->GetDevice(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-			vkCreateFence(m_DeviceManager->GetDevice(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
+		if (vkCreateSemaphore(m_DeviceManager->GetDevice(), &semaphoreInfo, nullptr, &m_imageAvailableSemaphores[i]) != VK_SUCCESS ||
+			vkCreateSemaphore(m_DeviceManager->GetDevice(), &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i]) != VK_SUCCESS ||
+			vkCreateFence(m_DeviceManager->GetDevice(), &fenceInfo, nullptr, &m_inFlightFences[i]) != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to create synchronization objects for a frame!");
 		}
@@ -442,7 +461,7 @@ void HelloTriangle::CreateCommandPool()
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-	if (vkCreateCommandPool(m_DeviceManager->GetDevice(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
+	if (vkCreateCommandPool(m_DeviceManager->GetDevice(), &poolInfo, nullptr, &m_commandPool) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create command pool!");
 	}
@@ -450,15 +469,15 @@ void HelloTriangle::CreateCommandPool()
 
 void HelloTriangle::CreateCommandBuffers()
 {
-	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	m_commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
 	VkCommandBufferAllocateInfo allocateInfo{};
 	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocateInfo.commandPool = commandPool;
+	allocateInfo.commandPool = m_commandPool;
 	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocateInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+	allocateInfo.commandBufferCount = static_cast<uint32_t>(m_commandBuffers.size());
 
-	if (vkAllocateCommandBuffers(m_DeviceManager->GetDevice(), &allocateInfo, commandBuffers.data()) != VK_SUCCESS)
+	if (vkAllocateCommandBuffers(m_DeviceManager->GetDevice(), &allocateInfo, m_commandBuffers.data()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to allocate command buffers!");
 	}
@@ -514,6 +533,8 @@ void HelloTriangle::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 	scissor.offset = { 0, 0 };
 	scissor.extent = m_SwapChainManager->GetSwapChainExtent();
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSets[m_currentFrame], 0, nullptr);
 
 	// Issue draw command for the triangle
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indicies.size()), 1, 0, 0, 0);
@@ -585,7 +606,7 @@ void HelloTriangle::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceS
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = commandPool;
+	allocInfo.commandPool = m_commandPool;
 	allocInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer;
@@ -615,7 +636,7 @@ void HelloTriangle::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceS
 	vkQueueSubmit(m_DeviceManager->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(m_DeviceManager->GetGraphicsQueue());
 
-	vkFreeCommandBuffers(m_DeviceManager->GetDevice(), commandPool, 1, &commandBuffer);
+	vkFreeCommandBuffers(m_DeviceManager->GetDevice(), m_commandPool, 1, &commandBuffer);
 }
 
 // TODO: Alias buffer using a single 'VkBuffer' object - to make it more cache friendly
@@ -661,4 +682,120 @@ void HelloTriangle::CreateIndexBuffer()
 
 	vkDestroyBuffer(m_DeviceManager->GetDevice(), stagingBuffer, nullptr);
 	vkFreeMemory(m_DeviceManager->GetDevice(), stagingBufferMemory, nullptr);
+}
+
+void HelloTriangle::CreateDescriptorSetLayout()
+{
+	VkDescriptorSetLayoutBinding uboLayoutBinding{};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	uboLayoutBinding.pImmutableSamplers = nullptr;
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo{};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = 1;
+	layoutInfo.pBindings = &uboLayoutBinding;
+
+	if (vkCreateDescriptorSetLayout(m_DeviceManager->GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create descriptor set layout!");
+	}
+
+}
+
+void HelloTriangle::CreateUniformBuffers()
+{
+	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+	m_uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	m_uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+	m_uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_uniformBuffers[i], m_uniformBuffersMemory[i]);
+
+		vkMapMemory(m_DeviceManager->GetDevice(), m_uniformBuffersMemory[i], 0, bufferSize, 0, &m_uniformBuffersMapped[i]);
+	}
+}
+
+void HelloTriangle::UpdateUniformBuffer(uint32_t currentImage)
+{
+	static auto startTime = std::chrono::high_resolution_clock::now();
+
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+	// Define model
+	UniformBufferObject ubo{};
+	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 1.0f));
+	ubo.view = glm::lookAt(glm::vec3(4.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.proj = glm::perspective(glm::radians(20.0f), m_SwapChainManager->GetSwapChainExtent().width / (float)m_SwapChainManager->GetSwapChainExtent().height, 0.1f, 10.0f);
+
+	// Invert Y as GLM is built for OGL
+	ubo.proj[1][1] *= -1;
+
+	memcpy(m_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+}
+
+void HelloTriangle::CreateDescriptorPool()
+{
+	VkDescriptorPoolSize poolSize{};
+	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSize.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+	VkDescriptorPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.poolSizeCount = 1;
+	poolInfo.pPoolSizes = &poolSize;
+	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+	if (vkCreateDescriptorPool(m_DeviceManager->GetDevice(), &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create descriptor pool!");
+	}
+}
+
+void HelloTriangle::CreateDescriptorSets()
+{
+	// Specify pool to allocate from, number of descriptor sets to alloc and layout to base them on
+	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
+
+	// Create a descriptor set for each frame in flight
+	VkDescriptorSetAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = m_descriptorPool;
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	allocInfo.pSetLayouts = layouts.data();
+
+	// Alloc descriptor sets
+	m_descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+	if (vkAllocateDescriptorSets(m_DeviceManager->GetDevice(), &allocInfo, m_descriptorSets.data()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to allocate descriptor sets!");
+	}
+
+	// Populate descriptors
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		VkDescriptorBufferInfo bufferInfo{};
+		bufferInfo.buffer = m_uniformBuffers[i];
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(UniformBufferObject);
+
+		VkWriteDescriptorSet descriptorWrite{};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = m_descriptorSets[i];
+		descriptorWrite.dstBinding = 0;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pBufferInfo = &bufferInfo;
+		descriptorWrite.pImageInfo = nullptr; // Optional
+		descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+		vkUpdateDescriptorSets(m_DeviceManager->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+	}
 }
