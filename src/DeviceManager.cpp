@@ -58,6 +58,7 @@ int DeviceManager::RateDeviceSuitability(VkPhysicalDevice device)
 {
 	vkGetPhysicalDeviceProperties(device, &m_deviceProperties);
 	vkGetPhysicalDeviceFeatures(device, &m_deviceFeatures);
+
 	QueueFamilyIndicies indices = CONTEXTMGR->FindQueueFamilies(device);
 	bool extensionsSupported = CheckDeviceExtensionSupport(device);
 	bool swapChainAdequate = false;
@@ -77,7 +78,7 @@ int DeviceManager::RateDeviceSuitability(VkPhysicalDevice device)
 	}
 
 	// Required features of the application
-	if (!m_deviceFeatures.geometryShader)
+	if (!m_deviceFeatures.geometryShader || !m_deviceFeatures.samplerAnisotropy)
 	{
 		return 0;
 	}
@@ -138,6 +139,7 @@ void DeviceManager::CreateLogicalDevice()
 	
 	// Specify device features that will be used
 	VkPhysicalDeviceFeatures deviceFeatures{};
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
 	
 	// Create the logical device
 	VkDeviceCreateInfo createInfo{};
