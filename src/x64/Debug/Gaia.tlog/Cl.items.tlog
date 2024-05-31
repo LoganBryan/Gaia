@@ -1,5 +1,6 @@
-F:\dev\Gaia-Renderer\Gaia\src\Context.cpp;F:\dev\Gaia-Renderer\Gaia\src\x64\Debug\Context.obj
-F:\dev\Gaia-Renderer\Gaia\src\DeviceManager.cpp;F:\dev\Gaia-Renderer\Gaia\src\x64\Debug\DeviceManager.obj
-F:\dev\Gaia-Renderer\Gaia\src\HelloTriangle.cpp;F:\dev\Gaia-Renderer\Gaia\src\x64\Debug\HelloTriangle.obj
-F:\dev\Gaia-Renderer\Gaia\src\main.cpp;F:\dev\Gaia-Renderer\Gaia\src\x64\Debug\main.obj
-F:\dev\Gaia-Renderer\Gaia\src\SwapChainManager.cpp;F:\dev\Gaia-Renderer\Gaia\src\x64\Debug\SwapChainManager.obj
+C:\Users\logan\Desktop\dev\Gaia\src\Context.cpp;C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\Context.obj
+C:\Users\logan\Desktop\dev\Gaia\src\DeviceManager.cpp;C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\DeviceManager.obj
+C:\Users\logan\Desktop\dev\Gaia\src\HelloTriangle.cpp;C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\HelloTriangle.obj
+C:\Users\logan\Desktop\dev\Gaia\src\main.cpp;C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\main.obj
+C:\Users\logan\Desktop\dev\Gaia\src\stb.cpp;C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\stb.obj
+C:\Users\logan\Desktop\dev\Gaia\src\SwapChainManager.cpp;C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\SwapChainManager.obj
