@@ -23,6 +23,8 @@
     <ClCompile Include="DeviceManager.cpp" />
     <ClCompile Include="HelloTriangle.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="VmaImpl.cpp" />
+    <ClCompile Include="VmaUsage.cpp" />
     <ClCompile Include="stb.cpp" />
     <ClCompile Include="SwapChainManager.cpp" />
   </ItemGroup>
@@ -30,6 +32,7 @@
     <ClInclude Include="DeviceManager.h" />
     <ClInclude Include="Context.h" />
     <ClInclude Include="HelloTriangle.h" />
+    <ClInclude Include="VmaUsage.h" />
     <ClInclude Include="SwapChainManager.h" />
   </ItemGroup>
   <ItemGroup>
@@ -134,7 +137,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;$(ProjectDir)..\thirdparty\vma;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -153,7 +156,8 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;$(ProjectDir)..\thirdparty\vma;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

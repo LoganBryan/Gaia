@@ -1,4 +1,7 @@
 #pragma once
+#ifndef HELLO_TRIANGLE_H
+#define HELLO_TRIANGLE_H
+
 #define NOMINMAX
 #define VK_USE_PLATFORM_WIN32_KHR
 #define GLFW_INCLUDE_VULKAN
@@ -28,6 +31,7 @@
 #include "Context.h"
 #include "SwapChainManager.h"
 #include "DeviceManager.h"
+#include "VmaUsage.h"
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -36,7 +40,7 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 // Temp vertex data
 struct Vertex
 {
-	glm::vec2 pos;
+	glm::vec3 pos;
 	glm::vec3 color;
 	glm::vec2 texCoord;
 
@@ -57,7 +61,7 @@ struct Vertex
 		// Position attribute
 		attributeDescriptions[0].binding = 0;
 		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
 		// Color attribute
@@ -83,18 +87,22 @@ struct UniformBufferObject
 	alignas(16) glm::mat4 proj;
 };
 
-const std::vector<Vertex> vertices =
-{
-	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-	{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-	{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+const std::vector<Vertex> vertices = {
+	{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+
+	{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 };
 
 // Could change to 32bit if we require more 
-const std::vector<uint16_t> indicies =
-{
-	0, 1, 2, 2, 3, 0
+const std::vector<uint16_t> indices = {
+	0, 1, 2, 2, 3, 0,
+	4, 5, 6, 6, 7, 4
 };
 
 class HelloTriangle
@@ -112,9 +120,9 @@ private:
 	void InitVulkan();
 	void MainLoop();
 	void Cleanup();
+	void DrawFrame();
 
 private:
-	void DrawFrame();
 
 	// Pipeline
 	void CreateGraphicsPipeline();
@@ -130,7 +138,7 @@ private:
 	void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VmaAllocation& allocation);
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	VkCommandBuffer BeginSingleTimeCommands();
 	void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
@@ -149,7 +157,7 @@ private:
 	VkImageView CreateImageView(VkImage image, VkFormat format);
 
 	void CreateTextureImage();
-	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VmaAllocation& allocation);
 	void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
@@ -163,18 +171,18 @@ private:
 	VkPipeline m_graphicsPipeline;
 
 	VkBuffer m_vertexBuffer;
-	VkDeviceMemory m_vertexBufferMemory;	
+	VmaAllocation m_vertexBufferMemory;
 
 	VkBuffer m_indexBuffer;
-	VkDeviceMemory m_indexBufferMemory;
+	VmaAllocation m_indexBufferMemory;
 
 	VkImage m_textureImage;
-	VkDeviceMemory m_textureImageMemory;
+	VmaAllocation m_textureImageMemory;
 	VkImageView m_textureImageView;
 	VkSampler m_textureSampler;
 
 	std::vector<VkBuffer> m_uniformBuffers;
-	std::vector<VkDeviceMemory> m_uniformBuffersMemory;
+	std::vector<VmaAllocation> m_uniformBuffersMemory;
 	std::vector<void*> m_uniformBuffersMapped;
 
 	VkDescriptorPool m_descriptorPool;
@@ -192,3 +200,5 @@ private:
 	SwapChainManager* m_SwapChainManager;
 	DeviceManager* m_DeviceManager;
 };
+
+#endif // HELLO_TRIANGLE_H

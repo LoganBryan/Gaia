@@ -1,4 +1,6 @@
 #pragma once
+#ifndef CONTEXT_H
+#define CONTEXT_H
 
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
@@ -110,3 +112,5 @@ namespace GAIA
 }
 
 #define CONTEXTMGR (GAIA::Context::Get())
+
+#endif // CONTEXT_H

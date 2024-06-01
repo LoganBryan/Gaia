@@ -11,6 +11,8 @@ void HelloTriangle::InitVulkan()
 	m_DeviceManager->GetBestPhysicalDevice();
 	m_DeviceManager->CreateLogicalDevice();
 
+	VMAUSG->CreateAllocator(CONTEXTMGR->GetVkInstance(), m_DeviceManager->GetPhysicalDevice(), m_DeviceManager->GetDevice());
+
 	m_SwapChainManager = new SwapChainManager();
 	m_SwapChainManager->Init(m_DeviceManager->GetDevice(), m_DeviceManager->GetPhysicalDevice());
 	m_SwapChainManager->CreateSwapChain();
@@ -57,22 +59,22 @@ void HelloTriangle::Cleanup()
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
 		vkDestroyBuffer(m_DeviceManager->GetDevice(), m_uniformBuffers[i], nullptr);
-		vkFreeMemory(m_DeviceManager->GetDevice(), m_uniformBuffersMemory[i], nullptr);
+		vmaFreeMemory(VMAUSG->GetAllocator(), m_uniformBuffersMemory[i]);
 	}
 
 	vkDestroyDescriptorPool(m_DeviceManager->GetDevice(), m_descriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(m_DeviceManager->GetDevice(), m_descriptorSetLayout, nullptr);
 
 	vkDestroyBuffer(m_DeviceManager->GetDevice(), m_vertexBuffer, nullptr);
-	vkFreeMemory(m_DeviceManager->GetDevice(), m_vertexBufferMemory, nullptr);
+	vmaFreeMemory(VMAUSG->GetAllocator(), m_vertexBufferMemory);
 
 	vkDestroyBuffer(m_DeviceManager->GetDevice(), m_indexBuffer, nullptr);
-	vkFreeMemory(m_DeviceManager->GetDevice(), m_indexBufferMemory, nullptr);
+	vmaFreeMemory(VMAUSG->GetAllocator(), m_indexBufferMemory);
 
 	vkDestroySampler(m_DeviceManager->GetDevice(), m_textureSampler, nullptr);
 	vkDestroyImageView(m_DeviceManager->GetDevice(), m_textureImageView, nullptr);
 	vkDestroyImage(m_DeviceManager->GetDevice(), m_textureImage, nullptr);
-	vkFreeMemory(m_DeviceManager->GetDevice(), m_textureImageMemory, nullptr);
+	vmaFreeMemory(VMAUSG->GetAllocator(), m_textureImageMemory);
 
 	vkDestroyPipeline(m_DeviceManager->GetDevice(), m_graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(m_DeviceManager->GetDevice(), m_pipelineLayout, nullptr);
@@ -84,6 +86,8 @@ void HelloTriangle::Cleanup()
 		vkDestroySemaphore(m_DeviceManager->GetDevice(), m_renderFinishedSemaphores[i], nullptr);
 		vkDestroyFence(m_DeviceManager->GetDevice(), m_inFlightFences[i], nullptr);
 	}
+
+	VMAUSG->DestroyAllocator();
 
 	vkDestroyCommandPool(m_DeviceManager->GetDevice(), m_commandPool, nullptr);
 	vkDestroyDevice(m_DeviceManager->GetDevice(), nullptr);
@@ -546,7 +550,7 @@ void HelloTriangle::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSets[m_currentFrame], 0, nullptr);
 
 	// Issue draw command for the triangle
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indicies.size()), 1, 0, 0, 0);
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
 	// End render pass
 	vkCmdEndRenderPass(commandBuffer);
@@ -576,7 +580,7 @@ uint32_t HelloTriangle::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlag
 
 }
 
-void HelloTriangle::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+void HelloTriangle::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VmaAllocation& allocation)
 {
 	// Set up mem buffer
 	VkBufferCreateInfo bufferInfo{};
@@ -585,28 +589,33 @@ void HelloTriangle::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, Vk
 	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (vkCreateBuffer(m_DeviceManager->GetDevice(), &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+	// Set up allocation info
+	VmaAllocationCreateInfo allocInfo = {};
+	allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+	allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
+
+	if (vmaCreateBuffer(VMAUSG->GetAllocator(), &bufferInfo, &allocInfo, &buffer, &allocation, nullptr) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create buffer!");
 	}
 
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(m_DeviceManager->GetDevice(), buffer, &memRequirements);
+	//VkMemoryRequirements memRequirements;
+	//vkGetBufferMemoryRequirements(m_DeviceManager->GetDevice(), buffer, &memRequirements);
 
-	// Determine memory type and allocate
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
+	//// Determine memory type and allocate
+	//VkMemoryAllocateInfo allocInfo{};
+	//allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	//allocInfo.allocationSize = memRequirements.size;
+	//allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
 
-	// Calling allocateMemory isn't the most performant as it's limited by the physical device. Should probably create a custom allocator. Good enough for now :3
-	if (vkAllocateMemory(m_DeviceManager->GetDevice(), &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to allocate buffer memory!");
-	}
+	//// Calling allocateMemory isn't the most performant as it's limited by the physical device. Should probably create a custom allocator. Good enough for now :3
+	//if (vkAllocateMemory(m_DeviceManager->GetDevice(), &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+	//{
+	//	throw std::runtime_error("Failed to allocate buffer memory!");
+	//}
 
-	// Associate allocated mem with the buffer, with a 0 offset
-	vkBindBufferMemory(m_DeviceManager->GetDevice(), buffer, bufferMemory, 0);
+	//// Associate allocated mem with the buffer, with a 0 offset
+	//vkBindBufferMemory(m_DeviceManager->GetDevice(), buffer, bufferMemory, 0);
 }
 
 void HelloTriangle::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
@@ -668,42 +677,35 @@ void HelloTriangle::CreateVertexBuffer()
 
 	// Create a device local temp staging buffer
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VmaAllocation stagingBufferMemory;
 	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
-	// Fill vertex buffer by mapping buffer into CPU accessible mem. With offset of 0 and size of buffer
-	void* data;
-	vkMapMemory(m_DeviceManager->GetDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, vertices.data(), (size_t)bufferSize);
-	vkUnmapMemory(m_DeviceManager->GetDevice(), stagingBufferMemory);
+	VMAUSG->MapAndCopyBuffer(stagingBufferMemory, vertices.data(), (size_t)bufferSize);
 
 	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vertexBuffer, m_vertexBufferMemory);
 	CopyBuffer(stagingBuffer, m_vertexBuffer, bufferSize);
 
 	vkDestroyBuffer(m_DeviceManager->GetDevice(), stagingBuffer, nullptr);
-	vkFreeMemory(m_DeviceManager->GetDevice(), stagingBufferMemory, nullptr);
+	vmaFreeMemory(VMAUSG->GetAllocator(), stagingBufferMemory);
 }
 
 void HelloTriangle::CreateIndexBuffer()
 {
-	VkDeviceSize bufferSize = sizeof(indicies[0]) * indicies.size();
+	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
 	// Create a device local temp staging buffer
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VmaAllocation stagingBufferMemory;
 	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
-	// Fill index buffer by mapping buffer into CPU accessible mem. With offset of 0 and size of buffer
-	void* data;
-	vkMapMemory(m_DeviceManager->GetDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, indicies.data(), (size_t)bufferSize);
-	vkUnmapMemory(m_DeviceManager->GetDevice(), stagingBufferMemory);
+	VMAUSG->MapAndCopyBuffer(stagingBufferMemory, indices.data(), (size_t)bufferSize);
 
 	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_indexBuffer, m_indexBufferMemory);
 	CopyBuffer(stagingBuffer, m_indexBuffer, bufferSize);
 
 	vkDestroyBuffer(m_DeviceManager->GetDevice(), stagingBuffer, nullptr);
-	vkFreeMemory(m_DeviceManager->GetDevice(), stagingBufferMemory, nullptr);
+
+	vmaFreeMemory(VMAUSG->GetAllocator(), stagingBufferMemory);
 }
 
 void HelloTriangle::CreateDescriptorSetLayout()
@@ -747,9 +749,28 @@ void HelloTriangle::CreateUniformBuffers()
 	{
 		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_uniformBuffers[i], m_uniformBuffersMemory[i]);
 
-		vkMapMemory(m_DeviceManager->GetDevice(), m_uniformBuffersMemory[i], 0, bufferSize, 0, &m_uniformBuffersMapped[i]);
+		//vmaMapMemory(VMAUSG->GetAllocator(), m_uniformBuffersMemory[i], &m_uniformBuffersMapped[i]);
 	}
 }
+
+//void HelloTriangle::UpdateUniformBuffer(uint32_t currentImage)
+//{
+//	static auto startTime = std::chrono::high_resolution_clock::now();
+//
+//	auto currentTime = std::chrono::high_resolution_clock::now();
+//	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+//
+//	// Define model
+//	UniformBufferObject ubo{};
+//	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 1.0f));
+//	ubo.view = glm::lookAt(glm::vec3(4.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+//	ubo.proj = glm::perspective(glm::radians(20.0f), m_SwapChainManager->GetSwapChainExtent().width / (float)m_SwapChainManager->GetSwapChainExtent().height, 0.1f, 10.0f);
+//
+//	// Invert Y as GLM is built for OGL
+//	ubo.proj[1][1] *= -1;
+//
+//	memcpy(m_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+//}
 
 void HelloTriangle::UpdateUniformBuffer(uint32_t currentImage)
 {
@@ -767,7 +788,18 @@ void HelloTriangle::UpdateUniformBuffer(uint32_t currentImage)
 	// Invert Y as GLM is built for OGL
 	ubo.proj[1][1] *= -1;
 
-	memcpy(m_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+	// Map the memory
+	void* mappedMemory;
+	if (vmaMapMemory(VMAUSG->GetAllocator(), m_uniformBuffersMemory[currentImage], &mappedMemory) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to map uniform buffer memory!");
+	}
+
+	// Copy data to the mapped memory
+	memcpy(mappedMemory, &ubo, sizeof(ubo));
+
+	// Unmap the memory
+	vmaUnmapMemory(VMAUSG->GetAllocator(), m_uniformBuffersMemory[currentImage]);
 }
 
 void HelloTriangle::CreateDescriptorPool()
@@ -882,7 +914,7 @@ void HelloTriangle::CreateTextureImage()
 	stbi_uc* pixels = stbi_load("assets/textures/thisguy.png", &width, &height, &channels, STBI_rgb_alpha);
 
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VmaAllocation stagingBufferMemory;
 
 	// Row * Row * bytes per pixel (4 for RGBA)
 	VkDeviceSize imageSize = width * height * 4;
@@ -895,10 +927,7 @@ void HelloTriangle::CreateTextureImage()
 	// Create host visible buffer
 	CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
-	void* data;
-	vkMapMemory(m_DeviceManager->GetDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
-	memcpy(data, pixels, static_cast<size_t>(imageSize));
-	vkUnmapMemory(m_DeviceManager->GetDevice(), stagingBufferMemory);
+	VMAUSG->MapAndCopyBuffer(stagingBufferMemory, pixels, static_cast<size_t>(imageSize));
 
 	// Clean up pixel array
 	stbi_image_free(pixels);
@@ -912,10 +941,11 @@ void HelloTriangle::CreateTextureImage()
 	TransitionImageLayout(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	vkDestroyBuffer(m_DeviceManager->GetDevice(), stagingBuffer, nullptr);
-	vkFreeMemory(m_DeviceManager->GetDevice(), stagingBufferMemory, nullptr);
+
+	vmaFreeMemory(VMAUSG->GetAllocator(), stagingBufferMemory);
 }
 
-void HelloTriangle::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+void HelloTriangle::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VmaAllocation& allocation)
 {
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -933,26 +963,14 @@ void HelloTriangle::CreateImage(uint32_t width, uint32_t height, VkFormat format
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageInfo.flags = 0;
 
-	if (vkCreateImage(m_DeviceManager->GetDevice(), &imageInfo, nullptr, &image) != VK_SUCCESS)
+	VmaAllocationCreateInfo allocCreateInfo = {};
+	allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+	//allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
+
+	if (vmaCreateImage(VMAUSG->GetAllocator(), &imageInfo, &allocCreateInfo, &image, &allocation, nullptr) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create image!");
 	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetImageMemoryRequirements(m_DeviceManager->GetDevice(), image, &memRequirements);
-
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
-
-	// Allocate and bind memory for the image
-	if (vkAllocateMemory(m_DeviceManager->GetDevice(), &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to allocate image memory!");
-	}
-
-	vkBindImageMemory(m_DeviceManager->GetDevice(), image, imageMemory, 0);
 }
 
 void HelloTriangle::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
