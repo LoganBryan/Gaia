@@ -17,7 +17,7 @@ const bool enableValidationLayers = true;
 #endif // NDEBUG
 
 const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
-const std::vector<const char*> deviceExtensions = { "VK_KHR_swapchain" };
+const std::vector<const char*> deviceExtensions = { "VK_KHR_swapchain"};
 const std::vector<VkDynamicState> dynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
 struct QueueFamilyIndicies

@@ -1,13 +1,2 @@
-﻿  Context.cpp
-  DeviceManager.cpp
-  HelloTriangle.cpp
-  main.cpp
-  VmaImpl.cpp
-  VmaUsage.cpp
-  stb.cpp
-  SwapChainManager.cpp
-  Generating Code...
-C:\Users\logan\Desktop\dev\Gaia\src\DeviceManager.cpp(55): warning C4715: 'DeviceManager::GetBestPhysicalDevice': not all control paths return a value
-C:\Users\logan\Desktop\dev\Gaia\src\Context.cpp(146): warning C4172: returning address of local variable or temporary: indices
-LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
+﻿  HelloTriangle.cpp
   Gaia.vcxproj -> C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\Gaia.exe

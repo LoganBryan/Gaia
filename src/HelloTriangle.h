@@ -9,6 +9,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -27,6 +28,7 @@
 
 #include <chrono>
 #include <stb_image.h>
+#include <tiny_obj_loader.h>
 
 #include "Context.h"
 #include "SwapChainManager.h"
@@ -36,6 +38,9 @@
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
+
+const std::string MODEL_PATH = "assets/models/test.obj";
+const std::string TEXTURE_PATH = "assets/textures/test.png";
 
 // Temp vertex data
 struct Vertex
@@ -87,24 +92,6 @@ struct UniformBufferObject
 	alignas(16) glm::mat4 proj;
 };
 
-const std::vector<Vertex> vertices = {
-	{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-
-	{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-};
-
-// Could change to 32bit if we require more 
-const std::vector<uint16_t> indices = {
-	0, 1, 2, 2, 3, 0,
-	4, 5, 6, 6, 7, 4
-};
-
 class HelloTriangle
 {
 public:
@@ -153,8 +140,15 @@ private:
 	void CreateDescriptorPool();
 	void CreateDescriptorSets();
 
+	// Depth Buffer
+	VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+	VkFormat FindDepthFormat();
+	bool HasStencilComponent(VkFormat format);
+
+	void CreateDepthResources();
+
 	// Texture mapping -- Right now this works synchronously but should be changed to be asynchrnous
-	VkImageView CreateImageView(VkImage image, VkFormat format);
+	VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 
 	void CreateTextureImage();
 	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VmaAllocation& allocation);
@@ -164,11 +158,17 @@ private:
 	void CreateTextureImageView();
 	void CreateTextureSampler();
 
+	// Model Loading
+	void LoadModel();
+
 private:
 
 	VkDescriptorSetLayout m_descriptorSetLayout;
 	VkPipelineLayout m_pipelineLayout;
 	VkPipeline m_graphicsPipeline;
+
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
 
 	VkBuffer m_vertexBuffer;
 	VmaAllocation m_vertexBufferMemory;
@@ -180,6 +180,10 @@ private:
 	VmaAllocation m_textureImageMemory;
 	VkImageView m_textureImageView;
 	VkSampler m_textureSampler;
+
+	VkImage m_depthImage;
+	VmaAllocation m_depthImageMemory;
+	VkImageView m_depthImageView;
 
 	std::vector<VkBuffer> m_uniformBuffers;
 	std::vector<VmaAllocation> m_uniformBuffersMemory;

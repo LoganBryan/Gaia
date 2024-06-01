@@ -23,6 +23,7 @@
     <ClCompile Include="DeviceManager.cpp" />
     <ClCompile Include="HelloTriangle.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="tinyobj.cpp" />
     <ClCompile Include="VmaImpl.cpp" />
     <ClCompile Include="VmaUsage.cpp" />
     <ClCompile Include="stb.cpp" />
@@ -137,8 +138,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;$(ProjectDir)..\thirdparty\vma;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;$(ProjectDir)..\thirdparty\vma;$(ProjectDir)..\thirdparty\tinyobjloader</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -156,7 +158,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;$(ProjectDir)..\thirdparty\vma;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;$(ProjectDir)..\thirdparty\vma;$(ProjectDir)..\thirdparty\tinyobjloader</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
     </ClCompile>
     <Link>

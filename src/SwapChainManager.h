@@ -15,6 +15,9 @@ public:
 	void CreateImageViews();
 	void CreateFrameBuffers();
 
+	// TEMP until refactor
+	inline void SetDepthImage(VkImageView depthImView) { m_depthImageView = depthImView; }
+
 public:
 	inline VkSwapchainKHR GetSwapChain() const { return m_swapChain; }
 	inline std::vector<VkImage> GetSwapChainImages() const { return m_swapChainImages; }
@@ -40,6 +43,9 @@ private:
 	std::vector<VkFramebuffer> m_swapChainFrameBuffers;
 	VkFormat m_swapChainImageFormat;
 	VkExtent2D m_swapChainExtent;
+
+	// TEMP
+	VkImageView m_depthImageView;
 
 	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);

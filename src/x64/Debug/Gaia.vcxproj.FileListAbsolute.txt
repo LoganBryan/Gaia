@@ -1,2 +1,1 @@
-F:\dev\Gaia-Renderer\Gaia\src\x64\Debug\Gaia.exe
 C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\Gaia.exe

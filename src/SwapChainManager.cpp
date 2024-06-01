@@ -1,5 +1,6 @@
 #include "SwapChainManager.h"
 #include "DeviceManager.h"
+#include <array>
 
 void SwapChainManager::Init(VkDevice device, VkPhysicalDevice physicalDevice)
 {
@@ -87,7 +88,6 @@ void SwapChainManager::RecreateSwapChain()
 {
 	// Pause application whilst minimized
 	int width = 0, height = 0;
-	glfwGetFramebufferSize(CONTEXTMGR->GetWindow(), &width, &height);
 	while (width == 0 || height == 0)
 	{
 		glfwGetFramebufferSize(CONTEXTMGR->GetWindow(), &width, &height);
@@ -100,6 +100,7 @@ void SwapChainManager::RecreateSwapChain()
 
 	CreateSwapChain();
 	CreateImageViews();
+	// This needs to call 'createDepthResources' it can't right now as this is a function in hellotriangle 
 	CreateFrameBuffers();
 }
 
@@ -141,13 +142,15 @@ void SwapChainManager::CreateFrameBuffers()
 
 	for (size_t i = 0; i < m_swapChainImageViews.size(); i++)
 	{
-		VkImageView attachments[] = { m_swapChainImageViews[i] };
+		//VkImageView attachments[] = { m_swapChainImageViews[i] };
+
+		std::array<VkImageView, 2> attachments = { m_swapChainImageViews[i], m_depthImageView };
 
 		VkFramebufferCreateInfo frameBufferInfo{};
 		frameBufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		frameBufferInfo.renderPass = m_renderPass;
-		frameBufferInfo.attachmentCount = 1;
-		frameBufferInfo.pAttachments = attachments;
+		frameBufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		frameBufferInfo.pAttachments = attachments.data();
 		frameBufferInfo.width = m_swapChainExtent.width;
 		frameBufferInfo.height = m_swapChainExtent.height;
 		frameBufferInfo.layers = 1;
