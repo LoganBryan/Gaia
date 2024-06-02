@@ -148,9 +148,7 @@ void SwapChainManager::CreateFrameBuffers()
 
 	for (size_t i = 0; i < m_swapChainImageViews.size(); i++)
 	{
-		//VkImageView attachments[] = { m_swapChainImageViews[i] };
-
-		std::array<VkImageView, 2> attachments = { m_swapChainImageViews[i], m_depthImageView };
+		std::array<VkImageView, 3> attachments = { m_colorImageView, m_depthImageView, m_swapChainImageViews[i] };
 
 		VkFramebufferCreateInfo frameBufferInfo{};
 		frameBufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

@@ -18,7 +18,13 @@ void HelloTriangle::InitVulkan()
 	m_SwapChainManager->Init(m_DeviceManager->GetDevice(), m_DeviceManager->GetPhysicalDevice());
 	m_SwapChainManager->CreateSwapChain();
 	m_SwapChainManager->CreateImageViews();
-	SwapChainManager::OnSwapChainRecreate = std::bind(&HelloTriangle::CreateDepthResources, this);
+	//SwapChainManager::OnSwapChainRecreate = std::bind(&HelloTriangle::CreateDepthResources, this);
+
+	// Gross weird. good enough for now
+	m_SwapChainManager->OnSwapChainRecreate = [this]() {
+		CreateColorResources();
+		CreateDepthResources();
+	};
 
 	CreateRenderPass();
 
@@ -130,54 +136,54 @@ void HelloTriangle::DrawFrame()
 
 	lastTime = currentTime;
 
-	// Wait until previous frame finished
-	vkWaitForFences(m_DeviceManager->GetDevice(), 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
+	VkResult waitForFencesResult = vkWaitForFences(m_DeviceManager->GetDevice(), 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
+	if (waitForFencesResult != VK_SUCCESS) {
+		throw std::runtime_error("Failed to wait for fences!");
+	}
 
 	// Get image from swap chain
 	uint32_t imageIndex;
-	VkResult result = vkAcquireNextImageKHR(m_DeviceManager->GetDevice(), m_SwapChainManager->GetSwapChain(), UINT64_MAX, m_imageAvailableSemaphores[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
-
-	// If the swap chain is out of date (usually because of a resize), we'll remake it
-	if (result == VK_ERROR_OUT_OF_DATE_KHR)
-	{
+	VkResult acquireResult = vkAcquireNextImageKHR(m_DeviceManager->GetDevice(), m_SwapChainManager->GetSwapChain(), UINT64_MAX, m_imageAvailableSemaphores[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
+	if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR) {
 		m_SwapChainManager->RecreateSwapChain();
 		return;
 	}
-	// Failed to get image or it can no longer be presented
-	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-	{
+	else if (acquireResult != VK_SUCCESS && acquireResult != VK_SUBOPTIMAL_KHR) {
 		throw std::runtime_error("Failed to acquire swap chain image!");
 	}
 
 	UpdateUniformBuffer(m_currentFrame);
 
-	// Only reset the fence if we know work is being submitted
-	vkResetFences(m_DeviceManager->GetDevice(), 1, &m_inFlightFences[m_currentFrame]);
+	VkResult resetFencesResult = vkResetFences(m_DeviceManager->GetDevice(), 1, &m_inFlightFences[m_currentFrame]);
+	if (resetFencesResult != VK_SUCCESS) {
+		throw std::runtime_error("Failed to reset fences!");
+	}
 
 	// Record command buffer
-	vkResetCommandBuffer(m_commandBuffers[m_currentFrame], 0);
+	VkResult resetCommandBufferResult = vkResetCommandBuffer(m_commandBuffers[m_currentFrame], 0);
+	if (resetCommandBufferResult != VK_SUCCESS) {
+		throw std::runtime_error("Failed to reset command buffer!");
+	}
 	RecordCommandBuffer(m_commandBuffers[m_currentFrame], imageIndex);
 
 	// Submit command buffer
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	// Ensure queue syncronization
-	VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphores[m_currentFrame]};
+	VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphores[m_currentFrame] };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &m_commandBuffers[m_currentFrame];
 
-	VkSemaphore signalSemaphores[] = { m_renderFinishedSemaphores[m_currentFrame]};
+	VkSemaphore signalSemaphores[] = { m_renderFinishedSemaphores[m_currentFrame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(m_DeviceManager->GetGraphicsQueue(), 1, &submitInfo, m_inFlightFences[m_currentFrame]) != VK_SUCCESS)
-	{
+	VkResult queueSubmitResult = vkQueueSubmit(m_DeviceManager->GetGraphicsQueue(), 1, &submitInfo, m_inFlightFences[m_currentFrame]);
+	if (queueSubmitResult != VK_SUCCESS) {
 		throw std::runtime_error("Failed to submit draw command buffer!");
 	}
 
@@ -187,21 +193,18 @@ void HelloTriangle::DrawFrame()
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
 
-	VkSwapchainKHR swapChains[] = { m_SwapChainManager->GetSwapChain()};
+	VkSwapchainKHR swapChains[] = { m_SwapChainManager->GetSwapChain() };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr; // Optional - mainly for multiple swap chains
 
-	result = vkQueuePresentKHR(m_DeviceManager->GetPresentQueue(), &presentInfo);
-
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || CONTEXTMGR->GetFrameResized())
-	{
+	VkResult presentResult = vkQueuePresentKHR(m_DeviceManager->GetPresentQueue(), &presentInfo);
+	if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR || CONTEXTMGR->GetFrameResized()) {
 		CONTEXTMGR->SetFrameResized(false);
 		m_SwapChainManager->RecreateSwapChain();
 	}
-	else if (result != VK_SUCCESS)
-	{
+	else if (presentResult != VK_SUCCESS) {
 		throw std::runtime_error("Failed to present swap chain image!");
 	}
 
@@ -299,7 +302,7 @@ void HelloTriangle::CreateGraphicsPipeline()
 	VkPipelineMultisampleStateCreateInfo multisample{};
 	multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisample.sampleShadingEnable = VK_FALSE;
-	multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisample.rasterizationSamples = m_DeviceManager->GetSampleCount();
 	multisample.minSampleShading = 1.0f; // Optional
 	multisample.pSampleMask = nullptr; // Optional
 	multisample.alphaToCoverageEnable = VK_FALSE; // Optional
@@ -422,10 +425,32 @@ VkShaderModule HelloTriangle::CreateShaderModule(const std::vector<char>& code)
 
 void HelloTriangle::CreateRenderPass()
 {
+	// Atachment description
+	VkAttachmentDescription colorAttachment{};
+	colorAttachment.format = m_SwapChainManager->GetSwapChainImageFormat();
+	colorAttachment.samples = m_DeviceManager->GetSampleCount();
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	// Resolve multisampled image to a regular image
+	VkAttachmentDescription colorAttachmentResolve{};
+	colorAttachmentResolve.format = m_SwapChainManager->GetSwapChainImageFormat();
+	colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
 	// Depth description
 	VkAttachmentDescription depthAttachment{};
 	depthAttachment.format = FindDepthFormat();
-	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthAttachment.samples = m_DeviceManager->GetSampleCount();
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -433,32 +458,28 @@ void HelloTriangle::CreateRenderPass()
 	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	// Depth reference
-	VkAttachmentReference depthAttachmentRef{};
-	depthAttachmentRef.attachment = 1;
-	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	// Atachment description
-	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = m_SwapChainManager->GetSwapChainImageFormat();
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
 	// Subpass + attachment reference
 	VkAttachmentReference colorAttachmentRef{};
 	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+	// Depth reference
+	VkAttachmentReference depthAttachmentRef{};
+	depthAttachmentRef.attachment = 1;
+	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	// Reference to point to color buffer
+	VkAttachmentReference colorAttachmentResolveRef{};
+	colorAttachmentResolveRef.attachment = 2;
+	colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	// Subpass desc
 	VkSubpassDescription subpass{};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
 	subpass.pDepthStencilAttachment = &depthAttachmentRef;
+	subpass.pResolveAttachments = &colorAttachmentResolveRef;
 
 	// Ensure we start the transition starts at the right time
 	VkSubpassDependency dependency{};
@@ -470,7 +491,7 @@ void HelloTriangle::CreateRenderPass()
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 	// Render pass
-	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+	std::array<VkAttachmentDescription, 3> attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
 	VkRenderPassCreateInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
@@ -1301,7 +1322,11 @@ void HelloTriangle::CreateColorResources()
 {
 	VkFormat colorFormat = m_SwapChainManager->GetSwapChainImageFormat();
 
-	CreateImage(m_SwapChainManager->GetSwapChainExtent().width, m_SwapChainManager->GetSwapChainExtent().height, 1, m_DeviceManager->GetSampleCount(), colorFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_colorImage, m_colorImageMemory);
-	m_colorImageView = CreateImageView(m_colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+	CreateImage(m_SwapChainManager->GetSwapChainExtent().width, m_SwapChainManager->GetSwapChainExtent().height, 1,
+		m_DeviceManager->GetSampleCount(), colorFormat, VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_colorImage, m_colorImageMemory);
 
+	m_colorImageView = CreateImageView(m_colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+	m_SwapChainManager->SetColorImage(m_colorImageView);
 }

@@ -18,6 +18,7 @@ public:
 
 	// TEMP until refactor
 	inline void SetDepthImage(VkImageView depthImView) { m_depthImageView = depthImView; }
+	inline void SetColorImage(VkImageView colorImageView) { m_colorImageView = colorImageView; }
 
 	// Temp for now
 	static std::function<void()> OnSwapChainRecreate;
@@ -50,6 +51,7 @@ private:
 
 	// TEMP
 	VkImageView m_depthImageView;
+	VkImageView m_colorImageView;
 
 	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);

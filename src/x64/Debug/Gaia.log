@@ -1,13 +1,36 @@
-﻿  Context.cpp
-  DeviceManager.cpp
-  HelloTriangle.cpp
-  GLM_GTX_hash requires C++11 standard library support
-  main.cpp
-  GLM_GTX_hash requires C++11 standard library support
-  tinyobj.cpp
-  VmaImpl.cpp
-  VmaUsage.cpp
-  stb.cpp
-  SwapChainManager.cpp
-  Generating Code...
-C:\Users\logan\Desktop\dev\Gaia\src\stb.cpp : fatal  error C1090: PDB API call failed, error code '3': C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\vc143.pdb
+﻿Build started 02/06/2024 23:15:41.
+Logging verbosity is set to: Normal.     1>Project "C:\Users\logan\Desktop\dev\Gaia\src\Gaia.vcxproj" on node 2 (Rebuild target(s)).
+     1>_PrepareForClean:
+         Deleting file "x64\Debug\Gaia.tlog\Gaia.lastbuildstate".
+       PrepareForBuild:
+         Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+       InitializeBuildStatus:
+         Creating "x64\Debug\Gaia.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+         Touching "x64\Debug\Gaia.tlog\unsuccessfulbuild".
+       ClCompile:
+         E:\VisualStudio\VS\VC\Tools\MSVC\14.38.33130\bin\HostX64\x64\CL.exe /c /IC:\VulkanSDK\1.3.283.0\Lib /IC:\Users\logan\Desktop\dev\Gaia\src\..\thirdparty\Include /I"C:\Users\logan\Desktop\dev\Gaia\src\..\thirdparty\glfw-3.4\include" /IC:\Users\logan\Desktop\dev\Gaia\src\..\thirdparty\glm /IC:\Users\logan\Desktop\dev\Gaia\src\..\thirdparty\stb /IC:\Users\logan\Desktop\dev\Gaia\src\..\thirdparty\vma /IC:\Users\logan\Desktop\dev\Gaia\src\..\thirdparty\tinyobjloader /ZI /JMC /nologo /W3 /WX- /diagnostics:column /sdl /Od /Ob0 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /permissive- /Fo"x64\Debug\\" /Fd"x64\Debug\vc143.pdb" /external:W3 /Gd /TP /FC /errorReport:prompt Context.cpp DeviceManager.cpp HelloTriangle.cpp main.cpp tinyobj.cpp VmaImpl.cpp VmaUsage.cpp stb.cpp SwapChainManager.cpp
+         Context.cpp
+         DeviceManager.cpp
+         HelloTriangle.cpp
+         GLM_GTX_hash requires C++11 standard library support
+         main.cpp
+         GLM_GTX_hash requires C++11 standard library support
+         tinyobj.cpp
+         VmaImpl.cpp
+         VmaUsage.cpp
+         stb.cpp
+         SwapChainManager.cpp
+         Generating Code...
+     1>C:\Users\logan\Desktop\dev\Gaia\src\tinyobj.cpp : fatal  error C1090: PDB API call failed, error code '3': C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\vc143.pdb
+     1>Done Building Project "C:\Users\logan\Desktop\dev\Gaia\src\Gaia.vcxproj" (Rebuild target(s)) -- FAILED.
+
+Build FAILED.
+
+       "C:\Users\logan\Desktop\dev\Gaia\src\Gaia.vcxproj" (Rebuild target) (1) ->
+       (ClCompile target) -> 
+         C:\Users\logan\Desktop\dev\Gaia\src\tinyobj.cpp : fatal  error C1090: PDB API call failed, error code '3': C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\vc143.pdb
+
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:06.93
