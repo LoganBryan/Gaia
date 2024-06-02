@@ -2,6 +2,8 @@
 #include "DeviceManager.h"
 #include <array>
 
+std::function<void()> SwapChainManager::OnSwapChainRecreate;
+
 void SwapChainManager::Init(VkDevice device, VkPhysicalDevice physicalDevice)
 {
 	m_device = device;
@@ -100,7 +102,11 @@ void SwapChainManager::RecreateSwapChain()
 
 	CreateSwapChain();
 	CreateImageViews();
-	// This needs to call 'createDepthResources' it can't right now as this is a function in hellotriangle 
+	// This is for createDepthResources, as it's in hellotriangle this is the quickest way to get something set up
+	if (OnSwapChainRecreate != nullptr)
+	{
+		OnSwapChainRecreate();
+	}
 	CreateFrameBuffers();
 }
 

@@ -2,6 +2,7 @@
 #include <vulkan/vulkan.h>
 #include "Context.h"
 #include <algorithm>
+#include <functional>
 #include <vector>
 
 class SwapChainManager
@@ -17,6 +18,9 @@ public:
 
 	// TEMP until refactor
 	inline void SetDepthImage(VkImageView depthImView) { m_depthImageView = depthImView; }
+
+	// Temp for now
+	static std::function<void()> OnSwapChainRecreate;
 
 public:
 	inline VkSwapchainKHR GetSwapChain() const { return m_swapChain; }
