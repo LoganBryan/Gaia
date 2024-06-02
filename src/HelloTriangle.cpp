@@ -26,6 +26,7 @@ void HelloTriangle::InitVulkan()
 	CreateGraphicsPipeline();
 
 	CreateCommandPool();
+	CreateColorResources();
 	CreateDepthResources();
 	m_SwapChainManager->CreateFrameBuffers();
 
@@ -64,6 +65,10 @@ void HelloTriangle::Cleanup()
 	vkDestroyImageView(m_DeviceManager->GetDevice(), m_depthImageView, nullptr);
 	vmaDestroyImage(VMAUSG->GetAllocator(), m_depthImage, nullptr);
 	vmaFreeMemory(VMAUSG->GetAllocator(), m_depthImageMemory);
+
+	vkDestroyImageView(m_DeviceManager->GetDevice(), m_colorImageView, nullptr);
+	vmaDestroyImage(VMAUSG->GetAllocator(), m_colorImage, nullptr);
+	vmaFreeMemory(VMAUSG->GetAllocator(), m_colorImageMemory);
 	// ^ This needs to be moved into cleanup swapchain ^
 	m_SwapChainManager->CleanupSwapChain();
 
@@ -790,7 +795,7 @@ void HelloTriangle::UpdateUniformBuffer(uint32_t currentImage)
 	UniformBufferObject ubo{};
 	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 1.0f));
 	//ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.view = glm::lookAt(glm::vec3(6.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.proj = glm::perspective(glm::radians(20.0f), m_SwapChainManager->GetSwapChainExtent().width / (float)m_SwapChainManager->GetSwapChainExtent().height, 0.1f, 10.0f);
 
 	// Invert Y as GLM is built for OGL
@@ -919,7 +924,7 @@ void HelloTriangle::CreateDepthResources()
 {
 	VkFormat depthFormat = FindDepthFormat();
 
-	CreateImage(m_SwapChainManager->GetSwapChainExtent().width, m_SwapChainManager->GetSwapChainExtent().height, 1, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_depthImage, m_depthImageMemory);
+	CreateImage(m_SwapChainManager->GetSwapChainExtent().width, m_SwapChainManager->GetSwapChainExtent().height, 1, m_DeviceManager->GetSampleCount(), depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_depthImage, m_depthImageMemory);
 	m_depthImageView = CreateImageView(m_depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
 	// TEMP until refactor!
@@ -986,7 +991,7 @@ void HelloTriangle::CreateTextureImage()
 	// Clean up pixel array
 	stbi_image_free(pixels);
 
-	CreateImage(width, height, m_mipLevels, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_textureImage, m_textureImageMemory); // Could be a chance that the device doesn't support 'VK_FORMAT_R8G8B8A8_SRGB'
+	CreateImage(width, height, m_mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_textureImage, m_textureImageMemory); // Could be a chance that the device doesn't support 'VK_FORMAT_R8G8B8A8_SRGB'
 
 	// Copy staging buffer to texture image
 	TransitionImageLayout(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_mipLevels);
@@ -1000,7 +1005,7 @@ void HelloTriangle::CreateTextureImage()
 	GenerateMipmaps(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, width, height, m_mipLevels);
 }
 
-void HelloTriangle::CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VmaAllocation& allocation)
+void HelloTriangle::CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VmaAllocation& allocation)
 {
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -1290,4 +1295,13 @@ void HelloTriangle::LoadModel()
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 	printf("[OBJ] %f ms", static_cast<double>(elapsed));
+}
+
+void HelloTriangle::CreateColorResources()
+{
+	VkFormat colorFormat = m_SwapChainManager->GetSwapChainImageFormat();
+
+	CreateImage(m_SwapChainManager->GetSwapChainExtent().width, m_SwapChainManager->GetSwapChainExtent().height, 1, m_DeviceManager->GetSampleCount(), colorFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_colorImage, m_colorImageMemory);
+	m_colorImageView = CreateImageView(m_colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+
 }

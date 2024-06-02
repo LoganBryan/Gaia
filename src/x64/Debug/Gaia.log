@@ -1,3 +1,13 @@
-﻿  HelloTriangle.cpp
+﻿  Context.cpp
+  DeviceManager.cpp
+  HelloTriangle.cpp
   GLM_GTX_hash requires C++11 standard library support
-  Gaia.vcxproj -> C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\Gaia.exe
+  main.cpp
+  GLM_GTX_hash requires C++11 standard library support
+  tinyobj.cpp
+  VmaImpl.cpp
+  VmaUsage.cpp
+  stb.cpp
+  SwapChainManager.cpp
+  Generating Code...
+C:\Users\logan\Desktop\dev\Gaia\src\stb.cpp : fatal  error C1090: PDB API call failed, error code '3': C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\vc143.pdb

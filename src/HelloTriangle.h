@@ -42,8 +42,8 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-const std::string MODEL_PATH = "assets/models/rat.obj";
-const std::string TEXTURE_PATH = "assets/textures/rat.png";
+const std::string MODEL_PATH = "assets/models/monkey.obj";
+const std::string TEXTURE_PATH = "assets/textures/thisguy.png";
 
 // Temp vertex data
 struct Vertex
@@ -170,7 +170,7 @@ private:
 	VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
 	void CreateTextureImage();
-	void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VmaAllocation& allocation);
+	void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VmaAllocation& allocation);
 	void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
 	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
@@ -181,6 +181,9 @@ private:
 
 	// Model Loading
 	void LoadModel();
+
+	// Multisampler
+	void CreateColorResources();
 
 private:
 
@@ -207,6 +210,10 @@ private:
 	VkImage m_depthImage;
 	VmaAllocation m_depthImageMemory;
 	VkImageView m_depthImageView;
+
+	VkImage m_colorImage;
+	VmaAllocation m_colorImageMemory;
+	VkImageView m_colorImageView;
 
 	std::vector<VkBuffer> m_uniformBuffers;
 	std::vector<VmaAllocation> m_uniformBuffersMemory;

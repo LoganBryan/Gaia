@@ -46,6 +46,7 @@ VkPhysicalDevice DeviceManager::GetBestPhysicalDevice()
 	if (m_devices.rbegin()->first > 0)
 	{
 		m_physicalDevice = m_devices.rbegin()->second;
+		m_msaaSamples = GetMaxUsableSampleCount();
 		printf("[DeviceSetup] [%x] %s.%x | api ver %x\n", m_deviceProperties.deviceID, m_deviceProperties.deviceName, m_deviceProperties.driverVersion, m_deviceProperties.apiVersion);
 	}
 	else
@@ -169,4 +170,22 @@ void DeviceManager::CreateLogicalDevice()
 	
 	vkGetDeviceQueue(m_device, indicies.graphicsFamily.value(), 0, &m_graphicsQueue);
 	vkGetDeviceQueue(m_device, indicies.graphicsFamily.value(), 0, &m_presentQueue);
+}
+
+VkSampleCountFlagBits DeviceManager::GetMaxUsableSampleCount()
+{
+	VkPhysicalDeviceProperties physicalDeviceProps;
+	vkGetPhysicalDeviceProperties(m_physicalDevice, &physicalDeviceProps);
+
+	VkSampleCountFlags counts = physicalDeviceProps.limits.framebufferColorSampleCounts & physicalDeviceProps.limits.framebufferDepthSampleCounts;
+
+	for (VkSampleCountFlagBits sampleCount : avaialbeSampleCounts)
+	{
+		if (counts & sampleCount)
+		{
+			return sampleCount;
+		}
+	}
+
+	return VK_SAMPLE_COUNT_1_BIT;
 }
