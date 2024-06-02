@@ -19,6 +19,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\thirdparty\meshoptimizer\allocator.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\clusterizer.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\indexcodec.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\indexgenerator.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\overdrawanalyzer.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\overdrawoptimizer.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\quantization.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\simplifier.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\spatialorder.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\stripifier.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\vcacheanalyzer.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\vcacheoptimizer.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\vertexcodec.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\vertexfilter.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\vfetchanalyzer.cpp" />
+    <ClCompile Include="..\thirdparty\meshoptimizer\vfetchoptimizer.cpp" />
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="DeviceManager.cpp" />
     <ClCompile Include="HelloTriangle.cpp" />
@@ -30,6 +46,7 @@
     <ClCompile Include="SwapChainManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\thirdparty\meshoptimizer\meshoptimizer.h" />
     <ClInclude Include="DeviceManager.h" />
     <ClInclude Include="Context.h" />
     <ClInclude Include="HelloTriangle.h" />
@@ -139,7 +156,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;$(ProjectDir)..\thirdparty\vma;$(ProjectDir)..\thirdparty\tinyobjloader</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;$(ProjectDir)..\thirdparty\vma;$(ProjectDir)..\thirdparty\tinyobjloader;$(ProjectDir)..\thirdparty\meshoptimizer</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
     </ClCompile>
@@ -159,7 +176,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;$(ProjectDir)..\thirdparty\vma;$(ProjectDir)..\thirdparty\tinyobjloader</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.283.0\Lib;$(ProjectDir)..\thirdparty\Include;$(ProjectDir)..\thirdparty\glfw-3.4\include;$(ProjectDir)..\thirdparty\glm;$(ProjectDir)..\thirdparty\stb;$(ProjectDir)..\thirdparty\vma;$(ProjectDir)..\thirdparty\tinyobjloader;$(ProjectDir)..\thirdparty\meshoptimizer</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
     </ClCompile>
     <Link>

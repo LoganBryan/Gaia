@@ -16,6 +16,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{5108b991-2a5e-4388-ac3f-bfb98a975ae8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MeshOptimizer">
+      <UniqueIdentifier>{308c8d35-61bc-4fc2-8a20-df8b3e599bac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -45,6 +48,54 @@
     <ClCompile Include="tinyobj.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\allocator.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\clusterizer.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\indexcodec.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\indexgenerator.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\overdrawanalyzer.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\overdrawoptimizer.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\quantization.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\simplifier.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\spatialorder.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\stripifier.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\vcacheanalyzer.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\vcacheoptimizer.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\vertexcodec.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\vertexfilter.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\vfetchanalyzer.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\meshoptimizer\vfetchoptimizer.cpp">
+      <Filter>MeshOptimizer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HelloTriangle.h">
@@ -61,6 +112,9 @@
     </ClInclude>
     <ClInclude Include="VmaUsage.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\meshoptimizer\meshoptimizer.h">
+      <Filter>MeshOptimizer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

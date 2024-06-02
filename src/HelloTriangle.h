@@ -12,6 +12,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
 #include <iostream>
 #include <stdexcept>
@@ -20,6 +22,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <cstring>
 #include <fstream>
@@ -29,6 +32,7 @@
 #include <chrono>
 #include <stb_image.h>
 #include <tiny_obj_loader.h>
+#include <meshoptimizer.h>
 
 #include "Context.h"
 #include "SwapChainManager.h"
@@ -39,8 +43,8 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-const std::string MODEL_PATH = "assets/models/rat.obj";
-const std::string TEXTURE_PATH = "assets/textures/rat.png";
+const std::string MODEL_PATH = "assets/models/highPoly.obj";
+const std::string TEXTURE_PATH = "assets/textures/wh.png";
 
 // Temp vertex data
 struct Vertex
@@ -83,7 +87,24 @@ struct Vertex
 
 		return attributeDescriptions;
 	}
+
+	inline bool operator==(const Vertex& other) const
+	{
+		return pos == other.pos && color == other.color && texCoord == other.texCoord;
+	}
 };
+
+// Implement a hash function for vertex
+namespace std
+{
+	template<> struct hash<Vertex>
+	{
+		size_t operator()(Vertex const& vertex) const
+		{
+			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
+		}
+	};
+}
 
 struct UniformBufferObject
 {
@@ -160,6 +181,7 @@ private:
 
 	// Model Loading
 	void LoadModel();
+	void UnoptLoadModel();
 
 private:
 

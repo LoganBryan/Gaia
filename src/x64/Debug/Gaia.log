@@ -1,2 +1,6 @@
-﻿  main.cpp
+﻿  HelloTriangle.cpp
+  GLM_GTX_hash requires C++11 standard library support
+  main.cpp
+  GLM_GTX_hash requires C++11 standard library support
+  Generating Code...
   Gaia.vcxproj -> C:\Users\logan\Desktop\dev\Gaia\src\x64\Debug\Gaia.exe

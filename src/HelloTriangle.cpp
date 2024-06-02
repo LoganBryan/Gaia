@@ -1150,6 +1150,87 @@ void HelloTriangle::CreateTextureSampler()
 // TODO: Along with texture loading allow this to just be called multiple times easily. Plus also set up MTL support
 void HelloTriangle::LoadModel()
 {
+	auto start = std::chrono::system_clock::now();
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string warn, err;
+
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str()))
+	{
+		throw std::runtime_error(warn + err);
+	}
+
+	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
+	for (const auto& shape : shapes)
+	{
+		for (const auto& index : shape.mesh.indices)
+		{
+			Vertex vertex{};
+
+			vertex.pos = {
+				attrib.vertices[3 * index.vertex_index + 0],
+				attrib.vertices[3 * index.vertex_index + 1],
+				attrib.vertices[3 * index.vertex_index + 2]
+			};
+
+			vertex.texCoord = {
+				attrib.texcoords[2 * index.texcoord_index + 0],
+				1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+			};
+
+			vertex.color = { 1.0f, 1.0f, 1.0f };
+
+			if (uniqueVertices.count(vertex) == 0)
+			{
+				uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+				vertices.push_back(vertex);
+			}
+
+			indices.push_back(uniqueVertices[vertex]);
+		}
+	}
+
+	// Remap vertices and indices
+	size_t indexCount = indices.size();
+	size_t vertexCount = vertices.size();
+	std::vector<unsigned int> remap(indexCount);
+
+	size_t remappedVertexCount = meshopt_generateVertexRemap(remap.data(), indices.data(), indexCount, vertices.data(), vertexCount, sizeof(Vertex));
+	if (remappedVertexCount != vertexCount)
+	{
+		printf("[OBJ] Remapped vertex count does not match original vertex count! [Remapped]%zu != [Original]%zu\n", remappedVertexCount, vertexCount);
+		return;
+	}
+
+	std::vector<Vertex> remappedVertices(remappedVertexCount);
+	std::vector<uint32_t> remappedIndices(indexCount);
+
+	meshopt_remapVertexBuffer(remappedVertices.data(), vertices.data(), vertexCount, sizeof(Vertex), remap.data());
+	meshopt_remapIndexBuffer(remappedIndices.data(), indices.data(), indexCount, remap.data());
+
+	// Optimize vertex cache, overdraw and vertex fetch
+	meshopt_optimizeVertexCache(remappedIndices.data(), remappedIndices.data(), indexCount, remappedVertexCount);
+	meshopt_optimizeOverdraw(remappedIndices.data(), remappedIndices.data(), indexCount, &remappedVertices[0].pos.x, remappedVertexCount, sizeof(Vertex), 1.05f);
+	std::vector<Vertex> optimizedVertices(remappedVertexCount);
+	meshopt_optimizeVertexFetch(optimizedVertices.data(), remappedIndices.data(), indexCount, remappedVertices.data(), remappedVertexCount, sizeof(Vertex));
+
+	// Move optimized data to be rendered
+	vertices = std::move(optimizedVertices);
+	indices = std::move(remappedIndices);
+
+	printf("Loaded %s. \n\tSize: [Vertices] %lld\t[Indices] %lld", MODEL_PATH.c_str(), vertices.size(), indices.size());
+
+	auto end = std::chrono::system_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+	printf("[Optimized OBJ Loading] %f ms", static_cast<double>(elapsed));
+}
+
+void HelloTriangle::UnoptLoadModel()
+{
+	auto start = std::chrono::system_clock::now();
+
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -1183,4 +1264,8 @@ void HelloTriangle::LoadModel()
 			indices.push_back(static_cast<uint32_t>(indices.size()));
 		}
 	}
+
+	auto end = std::chrono::system_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+	printf("[Old OBJ Loading] %f ms", static_cast<double>(elapsed));
 }
