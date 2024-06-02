@@ -39,8 +39,8 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-const std::string MODEL_PATH = "assets/models/test.obj";
-const std::string TEXTURE_PATH = "assets/textures/test.png";
+const std::string MODEL_PATH = "assets/models/rat.obj";
+const std::string TEXTURE_PATH = "assets/textures/rat.png";
 
 // Temp vertex data
 struct Vertex

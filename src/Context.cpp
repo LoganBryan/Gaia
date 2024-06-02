@@ -13,7 +13,7 @@ void GAIA::Context::CreateInstance()
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "No Engine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
+	appInfo.apiVersion = VK_API_VERSION_1_2;
 
 	// Needed info for global extensions and validation layers
 	VkInstanceCreateInfo createInfo{};
@@ -33,9 +33,15 @@ void GAIA::Context::CreateInstance()
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 	if (enableValidationLayers)
 	{
+		if (!CheckValidationLayerSupport())
+		{
+			throw std::runtime_error("Validation layers requested, but not available!");
+		}
+
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 
+		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 		PopulateDebugMessengerCreateInfo(debugCreateInfo);
 		createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 	}
@@ -246,9 +252,28 @@ void GAIA::Context::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreate
 	//createInfo.pUserData = nullptr; // optional ptr for callback
 }
 
+void GAIA::Context::SetupEnvironmentVariables()
+{
+	// Set environment variables for Vulkan API dump
+	_putenv("VK_INSTANCE_LAYERS=VK_LAYER_LUNARG_api_dump");
+	_putenv("VK_DEVICE_LAYERS=VK_LAYER_LUNARG_api_dump");
+	_putenv("VK_APIDUMP_LOG_FILENAME=apidump.txt"); // Set this to the desired log file path
+	_putenv("VK_APIDUMP_LOG_MODE=overwrite"); // Use "append" to append to an existing file
+	_putenv("VK_APIDUMP_VERBOSITY=full"); // Options: brief, full, medium
+}
+
 VKAPI_ATTR VkBool32 VKAPI_CALL GAIA::Context::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
 	std::cerr << "Validation Layer: " << pCallbackData->pMessage << std::endl;
+	if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	{
+		// Breakpoint for debugging
+#ifdef _MSC_VER
+		__debugbreak();
+#else
+		raise(SIGTRAP);
+#endif
+	}
 
 	return VK_FALSE;
 }
