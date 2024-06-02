@@ -12,6 +12,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
 #include <iostream>
 #include <stdexcept>
@@ -20,6 +22,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <cstring>
 #include <fstream>
@@ -83,8 +86,24 @@ struct Vertex
 
 		return attributeDescriptions;
 	}
+
+	inline bool operator==(const Vertex& other) const
+	{
+		return pos == other.pos && color == other.color && texCoord == other.texCoord;
+	}
 };
 
+// Implement a hash function for vertex
+namespace std
+{
+	template<> struct hash<Vertex>
+	{
+		size_t operator()(Vertex const& vertex) const
+		{
+			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
+		}
+	};
+}
 struct UniformBufferObject
 {
 	alignas(16) glm::mat4 model;

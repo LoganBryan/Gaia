@@ -1150,6 +1150,7 @@ void HelloTriangle::CreateTextureSampler()
 // TODO: Along with texture loading allow this to just be called multiple times easily. Plus also set up MTL support
 void HelloTriangle::LoadModel()
 {
+	auto start = std::chrono::system_clock::now();
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -1159,6 +1160,8 @@ void HelloTriangle::LoadModel()
 	{
 		throw std::runtime_error(warn + err);
 	}
+
+	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
 	for (const auto& shape : shapes)
 	{
@@ -1179,8 +1182,24 @@ void HelloTriangle::LoadModel()
 
 			vertex.color = { 1.0f, 1.0f, 1.0f };
 
-			vertices.push_back(vertex);
-			indices.push_back(static_cast<uint32_t>(indices.size()));
+			if (uniqueVertices.count(vertex) == 0)
+			{
+				uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+				vertices.push_back(vertex);
+			}
+
+			indices.push_back(uniqueVertices[vertex]);
 		}
 	}
+
+	// Remap vertices and indices
+	size_t indexCount = indices.size();
+	size_t vertexCount = vertices.size();
+	std::vector<unsigned int> remap(indexCount);
+
+	printf("Loaded %s. \n\tSize: [Vertices] %lld\t[Indices] %lld", MODEL_PATH.c_str(), vertices.size(), indices.size());
+
+	auto end = std::chrono::system_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+	printf("[OBJ] %f ms", static_cast<double>(elapsed));
 }
