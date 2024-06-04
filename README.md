@@ -26,3 +26,17 @@ This isn't in any specific order, just stuff I want to implement. I don't really
  - [ ] Global Illumination
  - [ ] GPU Cloth Simulation
  - [ ] Hardware Accelerated Ray Tracing
+
+# Tested Hardware
+
+| Nvidia | Intel | AMD |
+|--------|-------|-----|
+| ✅      | ✅     | ❔   |
+
+Tested Nvidia compatability on;
+ RTX 3070 ti - i7-12700kf - Windows 11
+
+Tested Intel compatability on;
+ i3-1215U - Windows 11
+
+I don't have anything with AMD hardware nor do I have anything running GNU/Linux or macOS.
