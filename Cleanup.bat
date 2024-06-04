@@ -10,7 +10,12 @@ IF EXIST "Gaia.sln" (
 	echo Deleted Solution File..
 )
 
-FOR %%f IN ("src\Gaia.vcxproj", "src\Gaia.vcxproj.filters") DO (
+IF EXIST .vs (
+	rmdir /s /q .vs
+	echo Deleted VS Temp Files..
+)
+
+FOR %%f IN ("src\Gaia.vcxproj", "src\Gaia.vcxproj.filters", "src\Gaia.vcxproj.user") DO (
 	IF EXIST %%f (
 		del /q %%f
 		echo Deleted %%f
