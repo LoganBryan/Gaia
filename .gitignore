@@ -47,4 +47,5 @@ bin/
 *.app
 
 # Don't ignore thirdparty
-!thirdparty/*
+!thirdparty/**
+!thirdparty/premake/*
