@@ -2,7 +2,7 @@
 
 void HelloTriangle::InitVulkan()
 {
-	CONTEXTMGR->SetupEnvironmentVariables();
+	//CONTEXTMGR->SetupEnvironmentVariables();
 	CONTEXTMGR->CreateInstance();
 	CONTEXTMGR->SetupDebugMessenger();
 	CONTEXTMGR->CreateSurface();

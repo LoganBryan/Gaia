@@ -16,7 +16,8 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif // NDEBUG
 
-const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation", "VK_LAYER_LUNARG_api_dump"};
+//const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation", "VK_LAYER_LUNARG_api_dump"}; // If I want to dump to a text file (NOT A GREAT IDEA AS IT FILLS UP FAST)
+const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation"};
 const std::vector<const char*> deviceExtensions = { "VK_KHR_swapchain"};
 const std::vector<VkDynamicState> dynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 

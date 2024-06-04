@@ -10,7 +10,7 @@ void GAIA::VmaUsage::CreateAllocator(VkInstance instance, VkPhysicalDevice physi
 {
 	if (m_allocator)
 	{
-		printf("Allocator already created!");
+		printf("Allocator already created!\n");
 		return;
 	}
 

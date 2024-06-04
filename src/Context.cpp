@@ -252,6 +252,8 @@ void GAIA::Context::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreate
 	//createInfo.pUserData = nullptr; // optional ptr for callback
 }
 
+
+// Optional for dump file
 void GAIA::Context::SetupEnvironmentVariables()
 {
 	// Set environment variables for Vulkan API dump

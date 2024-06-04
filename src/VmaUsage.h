@@ -42,7 +42,7 @@ namespace GAIA
 
 		VmaAllocator m_allocator;
 	protected:
-		VmaUsage() {}
+		VmaUsage() : m_allocator(nullptr) {}
 		~VmaUsage() {}
 	};
 }
