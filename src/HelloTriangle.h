@@ -38,10 +38,6 @@
 #include "DeviceManager.h"
 #include "VmaUsage.h"
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
-const int MAX_FRAMES_IN_FLIGHT = 2;
-
 const std::string MODEL_PATH = "assets/models/monkey.obj";
 const std::string TEXTURE_PATH = "assets/textures/mapDist.png";
 
@@ -131,9 +127,9 @@ private:
 private:
 
 	// Pipeline
-	void CreateGraphicsPipeline();
-	static std::vector<char> ReadFile(const std::string& filepath);
-	VkShaderModule CreateShaderModule(const std::vector<char>& code);
+	//oid CreateGraphicsPipeline();
+	//static std::vector<char> ReadFile(const std::string& filepath);
+	//VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
 	void CreateRenderPass();
 
@@ -144,6 +140,7 @@ private:
 	void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
 	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VmaAllocation& allocation);
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	VkCommandBuffer BeginSingleTimeCommands();
@@ -188,8 +185,8 @@ private:
 private:
 
 	VkDescriptorSetLayout m_descriptorSetLayout;
-	VkPipelineLayout m_pipelineLayout;
-	VkPipeline m_graphicsPipeline;
+	//VkPipelineLayout m_pipelineLayout;
+	//VkPipeline m_graphicsPipeline;
 
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
