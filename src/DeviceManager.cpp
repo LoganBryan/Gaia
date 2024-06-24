@@ -172,74 +172,74 @@ void DeviceManager::CreateLogicalDevice()
 	vkGetDeviceQueue(m_device, indicies.graphicsFamily.value(), 0, &m_presentQueue);
 }
 
-void DeviceManager::CreateCommandPool()
-{
-	QueueFamilyIndicies queueFamilyIndices = CONTEXTMGR->FindQueueFamilies(m_physicalDevice);
-
-	VkCommandPoolCreateInfo poolInfo{};
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
-	if (vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create command pool!");
-	}
-}
-
-void DeviceManager::CreateCommandBuffers()
-{
-	m_commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-
-	VkCommandBufferAllocateInfo allocateInfo{};
-	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocateInfo.commandPool = m_commandPool;
-	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocateInfo.commandBufferCount = static_cast<uint32_t>(m_commandBuffers.size());
-
-	if (vkAllocateCommandBuffers(m_device, &allocateInfo, m_commandBuffers.data()) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to allocate command buffers!");
-	}
-}
-
-void DeviceManager::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VkRenderPass renderPass, std::vector<VkFramebuffer>& frameBuffers, VkExtent2D extents)
-{
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = 0; // Opt
-	beginInfo.pInheritanceInfo = nullptr; // Opt
-
-	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to begin recording command buffer!");
-	}
-
-	// Clear color + depth
-	std::array<VkClearValue, 2> clearValues{};
-	clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-	clearValues[1].depthStencil = { 1.0f, 0 };
-
-	// Start render pass
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = renderPass;
-	renderPassInfo.framebuffer = frameBuffers[imageIndex];
-	renderPassInfo.renderArea.offset = { 0,0 };
-	renderPassInfo.renderArea.extent = extents;
-
-	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	renderPassInfo.pClearValues = clearValues.data();
-
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-	// Bind to graphics pipeline and begin drawing
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, PIPELINEMGR->GetGraphicsPipeline());
-
-	// Bind vertex + index buffer
-	VkBuffer 
-
-}
+//void DeviceManager::CreateCommandPool()
+//{
+//	QueueFamilyIndicies queueFamilyIndices = CONTEXTMGR->FindQueueFamilies(m_physicalDevice);
+//
+//	VkCommandPoolCreateInfo poolInfo{};
+//	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+//	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+//	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+//
+//	if (vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool) != VK_SUCCESS)
+//	{
+//		throw std::runtime_error("Failed to create command pool!");
+//	}
+//}
+//
+//void DeviceManager::CreateCommandBuffers()
+//{
+//	m_commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+//
+//	VkCommandBufferAllocateInfo allocateInfo{};
+//	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+//	allocateInfo.commandPool = m_commandPool;
+//	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+//	allocateInfo.commandBufferCount = static_cast<uint32_t>(m_commandBuffers.size());
+//
+//	if (vkAllocateCommandBuffers(m_device, &allocateInfo, m_commandBuffers.data()) != VK_SUCCESS)
+//	{
+//		throw std::runtime_error("Failed to allocate command buffers!");
+//	}
+//}
+//
+//void DeviceManager::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VkRenderPass renderPass, std::vector<VkFramebuffer>& frameBuffers, VkExtent2D extents)
+//{
+//	VkCommandBufferBeginInfo beginInfo{};
+//	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+//	beginInfo.flags = 0; // Opt
+//	beginInfo.pInheritanceInfo = nullptr; // Opt
+//
+//	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+//	{
+//		throw std::runtime_error("Failed to begin recording command buffer!");
+//	}
+//
+//	// Clear color + depth
+//	std::array<VkClearValue, 2> clearValues{};
+//	clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+//	clearValues[1].depthStencil = { 1.0f, 0 };
+//
+//	// Start render pass
+//	VkRenderPassBeginInfo renderPassInfo{};
+//	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+//	renderPassInfo.renderPass = renderPass;
+//	renderPassInfo.framebuffer = frameBuffers[imageIndex];
+//	renderPassInfo.renderArea.offset = { 0,0 };
+//	renderPassInfo.renderArea.extent = extents;
+//
+//	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+//	renderPassInfo.pClearValues = clearValues.data();
+//
+//	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+//
+//	// Bind to graphics pipeline and begin drawing
+//	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, PIPELINEMGR->GetGraphicsPipeline());
+//
+//	// Bind vertex + index buffer
+//	VkBuffer 
+//
+//}
 
 VkSampleCountFlagBits DeviceManager::GetMaxUsableSampleCount()
 {

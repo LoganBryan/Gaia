@@ -10,6 +10,12 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "Singleton.h"
+
+// Temp until multiple models/ textures get supported
+const std::string MODEL_PATH = "assets/models/monkey.obj";
+const std::string TEXTURE_PATH = "assets/textures/mapDist.png";
+
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -92,7 +98,7 @@ struct Vertex
 
 namespace GAIA
 {
-	class Context
+	class Context : public Singleton<Context>
 	{
 	public:
 		void InitWindow(int width, int height);
@@ -107,19 +113,6 @@ namespace GAIA
 		void SetupEnvironmentVariables();
 
 	public:
-		// Assure class can't be cloned or assigned
-		Context(Context& other) = delete;
-		void operator=(const Context&) = delete;
-
-		static inline Context* Get()
-		{
-			std::lock_guard<std::mutex> lock(mutex);
-			if (pInstance == nullptr)
-			{
-				pInstance = new Context();
-			}
-			return pInstance;
-		}
 
 		QueueFamilyIndicies& FindQueueFamilies(VkPhysicalDevice device);
 
@@ -147,8 +140,10 @@ namespace GAIA
 		void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
 
 	private:
-		static Context* pInstance;
-		static std::mutex mutex;
+		friend class Singleton<Context>;
+
+		Context() {}
+		~Context() {}
 
 		GLFWwindow* m_window;
 
@@ -159,12 +154,9 @@ namespace GAIA
 
 		bool m_frameBufferResized = false;
 
-	protected:
-		Context() {}
-		~Context() {}
 	};
 }
 
-#define CONTEXTMGR (GAIA::Context::Get())
+#define CONTEXTMGR GAIA::Context::GetInstance()
 
 #endif // CONTEXT_H

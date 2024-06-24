@@ -27,9 +27,9 @@ public:
 	void CreateLogicalDevice();
 
 	// Move to buffer
-	void CreateCommandPool();
-	void CreateCommandBuffers();
-	void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VkRenderPass renderPass, std::vector<VkFramebuffer>& frameBuffers, VkExtent2D extents);
+	//void CreateCommandPool();
+	//void CreateCommandBuffers();
+	//void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VkRenderPass renderPass, std::vector<VkFramebuffer>& frameBuffers, VkExtent2D extents);
 
 public:
 	VkPhysicalDevice GetPhysicalDevice() const { return m_physicalDevice; }
@@ -49,8 +49,8 @@ private:
 	std::multimap<int, VkPhysicalDevice> m_devices;
 	VkDevice m_device;
 
-	VkCommandPool m_commandPool;
-	std::vector<VkCommandBuffer> m_commandBuffers;
+	//VkCommandPool m_commandPool;
+	//std::vector<VkCommandBuffer> m_commandBuffers;
 
 	VkQueue m_graphicsQueue;
 	VkQueue m_presentQueue;

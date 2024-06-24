@@ -127,27 +127,27 @@ private:
 private:
 
 	// Pipeline
-	//oid CreateGraphicsPipeline();
-	//static std::vector<char> ReadFile(const std::string& filepath);
-	//VkShaderModule CreateShaderModule(const std::vector<char>& code);
+	void CreateGraphicsPipeline();
+	static std::vector<char> ReadFile(const std::string& filepath);
+	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
 	void CreateRenderPass();
 
 	void CreateSyncObjects();
 
-	void CreateCommandPool();
-	void CreateCommandBuffers();
-	void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+	//void CreateCommandPool();
+	//void CreateCommandBuffers();
+	//void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VmaAllocation& allocation);
-	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-	VkCommandBuffer BeginSingleTimeCommands();
-	void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+	//void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VmaAllocation& allocation);
+	//void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+	//VkCommandBuffer BeginSingleTimeCommands();
+	//void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 
-	void CreateVertexBuffer();
-	void CreateIndexBuffer();
+	//void CreateVertexBuffer();
+	//void CreateIndexBuffer();
 
 	// Uniform buffer
 	void CreateDescriptorSetLayout();
@@ -159,22 +159,22 @@ private:
 	// Depth Buffer
 	VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 	VkFormat FindDepthFormat();
-	bool HasStencilComponent(VkFormat format);
+	//bool HasStencilComponent(VkFormat format);
 
 	void CreateDepthResources();
 
 	// Texture mapping -- Right now this works synchronously but should be changed to be asynchrnous
-	VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+	//VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
-	void CreateTextureImage();
-	void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VmaAllocation& allocation);
-	void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
-	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+	//void CreateTextureImage();
+	//void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VmaAllocation& allocation);
+	//void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
+	//void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
-	void CreateTextureImageView();
-	void CreateTextureSampler();
+	//void CreateTextureImageView();
+	//void CreateTextureSampler();
 
-	void GenerateMipmaps(VkImage image, VkFormat imageFormat, int32_t width, int32_t height, uint32_t mipLevels);
+	//void GenerateMipmaps(VkImage image, VkFormat imageFormat, int32_t width, int32_t height, uint32_t mipLevels);
 
 	// Model Loading
 	void LoadModel();
@@ -197,12 +197,12 @@ private:
 	VkBuffer m_indexBuffer;
 	VmaAllocation m_indexBufferMemory;
 
-	uint32_t m_mipLevels;
+	//uint32_t m_mipLevels;
 
-	VkImage m_textureImage;
-	VmaAllocation m_textureImageMemory;
-	VkImageView m_textureImageView;
-	VkSampler m_textureSampler;
+	//VkImage m_textureImage;
+	//VmaAllocation m_textureImageMemory;
+	//VkImageView m_textureImageView;
+	//VkSampler m_textureSampler;
 
 	VkImage m_depthImage;
 	VmaAllocation m_depthImageMemory;

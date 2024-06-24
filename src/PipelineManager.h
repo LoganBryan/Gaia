@@ -9,36 +9,32 @@
 #include <vector>
 
 #include "Context.h"
+#include "Singleton.h"
 
 namespace GAIA
 {
-	class PipelineManager
+	class PipelineManager : public Singleton<PipelineManager>
 	{
 	public:
-		void Init(VkDevice device, VkExtent2D swapChainExtent, VkRenderPass renderPass);
+		inline void Init(VkDevice device, VkExtent2D swapChainExtent, VkRenderPass renderPass, VkDescriptorSetLayout descriptorSetLayout)
+		{
+			m_device = device;
+			m_swapChainExtent = swapChainExtent;
+			m_renderPass = renderPass;
+			m_descriptorSetLayout = descriptorSetLayout;
+		}
 		void Cleanup();
 
 		VkPipeline GetGraphicsPipeline() const { return m_graphicsPipeline; }
 		VkPipelineLayout GetPipelineLayout() const { return m_pipelineLayout; }
 
-	public:
-		// Assure class can't be cloned or assigned
-		PipelineManager(PipelineManager& other) = delete;
-		void operator=(const PipelineManager&) = delete;
-
-		static inline PipelineManager* Get()
-		{
-			std::lock_guard<std::mutex> lock(mutex);
-			if (pInstance == nullptr)
-			{
-				pInstance = new PipelineManager();
-			}
-			return pInstance;
-		}
 	private:
-		static PipelineManager* pInstance;
-		static std::mutex mutex;
+		friend class Singleton<PipelineManager>;
 
+		PipelineManager() {}
+		~PipelineManager() {}
+
+	private:
 		void CreateGraphicsPipeline();
 		std::vector<char> ReadFile(const std::string& filepath);
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
@@ -46,13 +42,12 @@ namespace GAIA
 		VkDevice m_device;
 		VkPipeline m_graphicsPipeline;
 		VkPipelineLayout m_pipelineLayout;
-
-	protected:
-		PipelineManager() {}
-		~PipelineManager() {}
+		VkExtent2D m_swapChainExtent;
+		VkRenderPass m_renderPass;
+		VkDescriptorSetLayout m_descriptorSetLayout;
 	};
 }
 
-#define PIPELINEMGR (GAIA::PipelineManager::Get())
+#define PIPELINEMGR GAIA::PipelineManager::GetInstance()
 
 #endif // PIPELINE_MGR_H
