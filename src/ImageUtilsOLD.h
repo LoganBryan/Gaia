@@ -1,4 +1,5 @@
 #pragma once
+// This may not need to be changed? Will see later
 
 #include <vulkan/vulkan.h>
 #include "VmaUsage.h"
